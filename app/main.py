@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from . import models
@@ -33,3 +34,9 @@ def create_entry(entry: schemas.EntryCreate, db: Session = Depends(get_db)):
 def read_entries(db: Session = Depends(get_db)):
     entries = crud.get_entries(db)
     return entries
+
+
+@app.get("/ledger_status/", response_model=List[schemas.LedgerStatus])
+def read_ledger_status(db: Session = Depends(get_db)):
+    ledger_status = crud.get_ledger_status(db)
+    return ledger_status

@@ -1,5 +1,4 @@
-from typing import Optional
-from datetime import datetime
+from typing import Optional, Dict, List
 from pydantic import BaseModel
 
 
@@ -17,6 +16,14 @@ class EntryCreate(EntryBase):
 
 class Entry(EntryBase):
     id: int
+
+    class Config:
+        orm_mode = True
+
+
+class LedgerStatus(BaseModel):
+    name: str
+    amount: float
 
     class Config:
         orm_mode = True
