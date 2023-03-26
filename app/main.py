@@ -36,7 +36,7 @@ def read_entries(db: Session = Depends(get_db)):
     return entries
 
 
-@app.get("/ledger_status/", response_model=List[schemas.LedgerStatus])
-def read_ledger_status(db: Session = Depends(get_db)):
-    ledger_status = crud.get_ledger_status(db)
-    return ledger_status
+@app.get("/iou_status/", response_model=List[schemas.IOUStatus])
+def read_iou_status(db: Session = Depends(get_db)):
+    iou_status = crud.get_iou_status(db)
+    return iou_status

@@ -21,7 +21,7 @@ class Entry(EntryBase):
         orm_mode = True
 
 
-class LedgerStatus(BaseModel):
+class IOUStatus(BaseModel):
     name: str
     amount: float
 

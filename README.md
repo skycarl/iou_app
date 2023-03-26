@@ -1,4 +1,4 @@
-# ledger_app
+# iou_app
 
 ## Run
 

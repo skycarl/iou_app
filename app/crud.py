@@ -20,11 +20,11 @@ def get_entries(db: Session):
     return db.query(models.Entry).all()
 
 
-def get_ledger_status(db: Session):
+def get_iou_status(db: Session):
     query = db.query(models.Entry.name, models.Entry.amount) \
               .group_by(models.Entry.name) \
               .with_entities(models.Entry.name, models.func.sum(models.Entry.amount))
     result = []
     for row in query:
         result.append({'name': row[0], 'amount': row[1]})
-    return [schemas.LedgerStatus(name=row['name'], amount=row['amount']) for row in result]
+    return [schemas.IOUStatus(name=row['name'], amount=row['amount']) for row in result]
