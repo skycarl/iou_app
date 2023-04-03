@@ -23,6 +23,7 @@ def get_entries(db: Session):
 def get_iou_status(db: Session):
     query = db.query(models.Entry.name, models.Entry.amount) \
               .group_by(models.Entry.name) \
+              .order_by(models.Entry.name) \
               .with_entities(models.Entry.name, models.func.sum(models.Entry.amount))
     result = []
     for row in query:
