@@ -5,10 +5,9 @@ from app import models
 import pytest
 
 
-# TODO think about whether I really need this here
+# TODO unify testing approach with official way of testing FastAPI apps like test_main.py does
 @pytest.fixture
-# def db(tmp_path, scope="session"):  # TODO think about this scope
-def db(tmp_path):  # TODO think about this scope
+def db(tmp_path):
 
     SQLALCHEMY_DATABASE_URL = f'sqlite:///{tmp_path}/test_app.db'
 
