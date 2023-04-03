@@ -128,5 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# VS Code files
+settings.json
+
 # Project-specific files
 iou_app.db
+test.db
