@@ -16,16 +16,27 @@ def create_entry(db: Session, entry: schemas.EntryCreate):
     return db_entry
 
 
+def get_entry(db: Session, entry_id: int):
+    return db.query(models.Entry).filter(models.Entry.id == entry_id).first()
+
+
 def get_entries(db: Session):
-    return db.query(models.Entry).all()
+    return db.query(models.Entry).filter(models.Entry.deleted == False).all()
 
 
 def get_iou_status(db: Session):
-    query = db.query(models.Entry.name, models.Entry.amount) \
-              .group_by(models.Entry.name) \
-              .order_by(models.Entry.name) \
-              .with_entities(models.Entry.name, models.func.sum(models.Entry.amount))
-    result = []
-    for row in query:
-        result.append({'name': row[0], 'amount': row[1]})
-    return [schemas.IOUStatus(name=row['name'], amount=row['amount']) for row in result]
+    return db.query(
+        models.Entry.name,
+        models.Entry.amount).filter(models.Entry.deleted == False).group_by(models.Entry.name).all()
+
+
+def get_max_sum_name(db: Session):
+    result = db.query(models.Entry.name, models.Entry.amount).filter(models.Entry.deleted == False).group_by(models.Entry.name).order_by(models.Entry.amount.desc()).first()
+    return {"name": result[0], "amount": result[1]}
+
+
+def delete_entry(db: Session, entry: models.Entry):
+    entry.deleted = True
+    db.commit()
+    db.refresh(entry)
+    return entry

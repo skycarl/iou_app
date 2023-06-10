@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from . import models
 from . import schemas
@@ -40,3 +40,18 @@ def read_entries(db: Session = Depends(get_db)):
 def read_iou_status(db: Session = Depends(get_db)):
     iou_status = crud.get_iou_status(db)
     return iou_status
+
+
+# TODO this fails when there are no entries
+@app.get("/max_sum_name/", response_model=schemas.IOUStatus)
+def max_sum_name(db: Session = Depends(get_db)):
+    name = crud.get_max_sum_name(db)
+    return name
+
+@app.delete("/delete/{entry_id}")
+def delete_entry(entry_id: int, db: Session = Depends(get_db)):
+    entry = crud.get_entry(db, entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    entry = crud.delete_entry(db, entry)
+    return {"detail": f"Entry {entry_id} deleted"}

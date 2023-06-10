@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, text, func
+from sqlalchemy import Column, Integer, String, Float, DateTime, text, func, Boolean
 from .database import Base
 
 
@@ -10,3 +10,4 @@ class Entry(Base):
     name = Column(String)
     amount = Column(Float)
     description = Column(String, nullable=True)
+    deleted = Column(Boolean, default=False)
