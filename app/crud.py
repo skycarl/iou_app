@@ -32,7 +32,9 @@ def get_iou_status(db: Session):
 
 def get_max_sum_name(db: Session):
     result = db.query(models.Entry.name, models.Entry.amount).filter(models.Entry.deleted == False).group_by(models.Entry.name).order_by(models.Entry.amount.desc()).first()
-    return {"name": result[0], "amount": result[1]}
+    if result:
+        return {"name": result[0], "amount": result[1]}
+    return "No entries found"
 
 
 def delete_entry(db: Session, entry: models.Entry):

@@ -42,8 +42,7 @@ def read_iou_status(db: Session = Depends(get_db)):
     return iou_status
 
 
-# TODO this fails when there are no entries
-@app.get("/max_sum_name/", response_model=schemas.IOUStatus)
+@app.get("/max_sum_name/")
 def max_sum_name(db: Session = Depends(get_db)):
     name = crud.get_max_sum_name(db)
     return name
