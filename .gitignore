@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # VS Code files
-settings.json
+.vscode/
 
 # Project-specific files
 iou_app.db
