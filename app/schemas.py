@@ -3,13 +3,13 @@ from pydantic import BaseModel
 
 
 class EntryBase(BaseModel):
-    name: str
+    sender: str
     amount: float
     description: Optional[str] = None
 
 
 class EntryCreate(EntryBase):
-    name: str
+    sender: str
     amount: float
     description: Optional[str] = None
 
@@ -22,7 +22,7 @@ class Entry(EntryBase):
 
 
 class IOUStatus(BaseModel):
-    name: str
+    sender: str
     amount: float
 
     class Config:

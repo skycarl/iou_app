@@ -14,9 +14,9 @@ import tempfile
 @pytest.fixture
 def entries():
     return [
-        schemas.EntryCreate(name="Jane Smith", amount=100.0,
+        schemas.EntryCreate(sender="Jane Smith", amount=100.0,
                             description="Test entry 1"),
-        schemas.EntryCreate(name="John Doe", amount=50.0,
+        schemas.EntryCreate(sender="John Doe", amount=50.0,
                             description="Test entry 2")
     ]
 
@@ -53,7 +53,7 @@ def test_create_entries(db: Session, entries):
         assert response.status_code == 200
 
         created_entry = response.json()
-        assert created_entry["name"] == entry.name
+        assert created_entry["sender"] == entry.sender
         assert created_entry["amount"] == entry.amount
         assert created_entry["description"] == entry.description
         assert "id" in created_entry
@@ -65,7 +65,7 @@ def test_read_entries(db: Session, entries):
     retrieved_entries = response.json()
     assert len(retrieved_entries) == len(entries)
     for i, entry in enumerate(entries):
-        assert retrieved_entries[i]["name"] == entry.name
+        assert retrieved_entries[i]["sender"] == entry.sender
         assert retrieved_entries[i]["amount"] == entry.amount
         assert retrieved_entries[i]["description"] == entry.description
 
@@ -75,9 +75,9 @@ def test_read_iou_status(db: Session, entries):
     assert response.status_code == 200
     iou_status = response.json()
     assert len(iou_status) == 2
-    assert iou_status[0]["name"] == entries[0].name
+    assert iou_status[0]["sender"] == entries[0].sender
     assert iou_status[0]["amount"] == entries[0].amount
-    assert iou_status[1]["name"] == entries[1].name
+    assert iou_status[1]["sender"] == entries[1].sender
     assert iou_status[1]["amount"] == entries[1].amount
 
 
