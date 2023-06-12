@@ -9,9 +9,7 @@ class EntryBase(BaseModel):
 
 
 class EntryCreate(EntryBase):
-    sender: str
-    amount: float
-    description: Optional[str] = None
+    pass
 
 
 class Entry(EntryBase):
