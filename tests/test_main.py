@@ -13,11 +13,13 @@ import pytest
 @pytest.fixture
 def entries():
     return [
-        schemas.EntryCreate(sender="Alice",
+        schemas.EntryCreate(conversation_id=0,
+                            sender="Alice",
                             recipient="Bob",
                             amount=100.0,
                             description="Test entry 1"),
-        schemas.EntryCreate(sender="Bob",
+        schemas.EntryCreate(conversation_id=0,
+                            sender="Bob",
                             recipient="Alice",
                             amount=50.0,
                             description="Test entry 2")
@@ -63,7 +65,8 @@ def test_create_entries(db: Session, entries):
 
 
 def test_read_entries(db: Session, entries):
-    response = client.get("/entries/")
+    conversation_id = entries[0].conversation_id
+    response = client.get(f"/entries/?conversation_id={conversation_id}")
     assert response.status_code == 200
     retrieved_entries = response.json()
     assert len(retrieved_entries) == len(entries)
@@ -77,7 +80,8 @@ def test_read_entries(db: Session, entries):
 def test_read_iou_status(db: Session, entries):
     user1 = entries[0].sender
     user2 = entries[0].recipient
-    response = client.get(f"/iou_status/?user1={user1}&user2={user2}")
+    conversation_id = entries[0].conversation_id
+    response = client.get(f"/iou_status/?conversation_id={conversation_id}&user1={user1}&user2={user2}")
     assert response.status_code == 200
     iou_status = response.json()
     assert iou_status["user1"] == entries[0].sender

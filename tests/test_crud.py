@@ -6,6 +6,7 @@ import pytest
 @pytest.fixture
 def entry1(scope="session"):
     return schemas.EntryCreate(
+        conversation_id=0,
         sender="Alice",
         recipient="Bob",
         amount=100.00,
@@ -15,6 +16,7 @@ def entry1(scope="session"):
 @pytest.fixture
 def entry2():
     return schemas.EntryCreate(
+        conversation_id=0,
         sender="Bob",
         recipient="Alice",
         amount=50.00,
@@ -32,7 +34,7 @@ def test_create_entry(db, entry1):
 
 def test_get_entries(db, entry1):
     created_entry = crud.create_entry(db, entry1)
-    entries = crud.get_entries(db)
+    entries = crud.get_entries(db, conversation_id=entry1.conversation_id)
     assert len(entries) == 1
     assert entries[0].sender == entry1.sender
     assert entries[0].recipient == entry1.recipient
@@ -44,19 +46,21 @@ def test_get_iou_status(db, entry1, entry2):
     
     crud.create_entry(db, entry1)
     crud.create_entry(db, entry2)
-    iou_status = crud.get_pairs(db, user1=entry1.sender, user2=entry1.recipient)
+    iou_status = crud.get_pairs(db, conversation_id=entry1.conversation_id, user1=entry1.sender, user2=entry1.recipient)
     assert iou_status[0] == [('Alice', 'Bob', 100.0)]
     assert iou_status[1] == [('Bob', 'Alice', 50.0)]
 
 
 def test_get_max_sum_name(db):
     entry1 = schemas.EntryCreate(
+        conversation_id=0,
         sender="Alice",
         recipient="Bob",
         amount=100.00,
         description="A test entry"
     )
     entry2 = schemas.EntryCreate(
+        conversation_id=0,
         sender="Fred",
         recipient="Linda",
         amount=50.00,
@@ -83,5 +87,5 @@ def test_get_entries_with_deleted(db, entry1):
     created_entry1 = crud.create_entry(db, entry1)
     created_entry2 = crud.create_entry(db, entry1)
     deleted_entry = crud.delete_entry(db, created_entry2)
-    assert len(crud.get_entries(db)) == 1
+    assert len(crud.get_entries(db, conversation_id=entry1.conversation_id)) == 1
     

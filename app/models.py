@@ -7,6 +7,7 @@ class Entry(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     datetime = Column(DateTime, default=func.now(), server_default=text('CURRENT_TIMESTAMP'))
+    conversation_id = Column(Integer)
     sender = Column(String)
     recipient = Column(String)
     amount = Column(Float)

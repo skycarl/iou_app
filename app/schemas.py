@@ -1,8 +1,9 @@
-from typing import Optional, Dict, List
+from typing import Optional
 from pydantic import BaseModel
 
 
 class EntryBase(BaseModel):
+    conversation_id: int
     sender: str
     recipient: str
     amount: float
@@ -10,10 +11,7 @@ class EntryBase(BaseModel):
 
 
 class EntryCreate(EntryBase):
-    sender: str
-    recipient: str
-    amount: float
-    description: Optional[str] = None
+    pass
 
 
 class Entry(EntryBase):

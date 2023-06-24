@@ -32,14 +32,16 @@ def create_entry(entry: schemas.EntryCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/entries/", response_model=list[schemas.Entry])
-def read_entries(db: Session = Depends(get_db)):
-    entries = crud.get_entries(db)
+def read_entries(conversation_id, db: Session = Depends(get_db)):
+    if not conversation_id:
+        raise HTTPException(status_code=400, detail="Conversation ID not found")
+    entries = crud.get_entries(db, conversation_id=conversation_id)
     return entries
 
 
 @app.get("/iou_status/", response_model=schemas.IOUStatus)
-def read_iou_status(user1, user2, db: Session = Depends(get_db)):
-    q1, q2 = crud.get_pairs(db, user1, user2)
+def read_iou_status(conversation_id, user1, user2, db: Session = Depends(get_db)):
+    q1, q2 = crud.get_pairs(db, int(conversation_id), user1, user2)
     iou_status = utils.compute_iou_status(q1, q2)
     return iou_status
 
