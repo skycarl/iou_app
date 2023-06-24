@@ -4,12 +4,16 @@ from pydantic import BaseModel
 
 class EntryBase(BaseModel):
     sender: str
+    recipient: str
     amount: float
     description: Optional[str] = None
 
 
 class EntryCreate(EntryBase):
-    pass
+    sender: str
+    recipient: str
+    amount: float
+    description: Optional[str] = None
 
 
 class Entry(EntryBase):
@@ -20,7 +24,8 @@ class Entry(EntryBase):
 
 
 class IOUStatus(BaseModel):
-    sender: str
+    user1: str
+    user2: str
     amount: float
 
     class Config:

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from . import models
 from . import schemas
 from . import crud
+from . import utils
 from .database import SessionLocal, engine
 
 
@@ -36,13 +37,14 @@ def read_entries(db: Session = Depends(get_db)):
     return entries
 
 
-@app.get("/iou_status/", response_model=List[schemas.IOUStatus])
-def read_iou_status(db: Session = Depends(get_db)):
-    iou_status = crud.get_iou_status(db)
+@app.get("/iou_status/", response_model=schemas.IOUStatus)
+def read_iou_status(user1, user2, db: Session = Depends(get_db)):
+    q1, q2 = crud.get_pairs(db, user1, user2)
+    iou_status = utils.compute_iou_status(q1, q2)
     return iou_status
 
 
-@app.get("/max_sum_name/")
+@app.get("/max_sum_name/") # todo maybe rename this who pays for a pair of people?
 def max_sum_name(db: Session = Depends(get_db)):
     name = crud.get_max_sum_name(db)
     return name

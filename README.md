@@ -20,11 +20,15 @@ uvicorn app.main:app --reload
 - [x] List IOUs
 - [x] Delete IOU (query for latest 5 entries with IDs?)
 - [x] Find participant with max IOU
-
+- [x] Add recipient to IOU
+- [ ] Add conversation ID
+- [x] Change IOU status to be for each pair of participants, e.g., who owes who how much
+- [ ] Add "who should pay" endpoint (have to choose between 2 users)
+ 
 ## Feature ideas
 
 - [ ] Recurring IOU
 - [ ] Support multiple chats (e.g. group by chat ID)
 - [ ] Split bill between everyone
 - [ ] Group participants (e.g., by household)
-- [ ] Settle IOUs (e.g., figure out who owes who how much)
+- [ ] Settle IOUs (e.g., figure out who owes who how much and add negative amount to transactions)

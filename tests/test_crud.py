@@ -4,59 +4,61 @@ import pytest
 
 
 @pytest.fixture
-def entry(scope="session"):
+def entry1(scope="session"):
     return schemas.EntryCreate(
         sender="Alice",
+        recipient="Bob",
         amount=100.00,
         description="A test entry"
     )
 
-
-def test_create_entry(db, entry):
-    created_entry = crud.create_entry(db, entry)
-    assert created_entry.sender == entry.sender
-    assert created_entry.amount == entry.amount
-    assert created_entry.description == entry.description
-
-
-def test_get_entries(db, entry):
-    created_entry = crud.create_entry(db, entry)
-    entries = crud.get_entries(db)
-    assert len(entries) == 1
-    assert entries[0].sender == entry.sender
-    assert entries[0].amount == entry.amount
-    assert entries[0].description == entry.description
-
-
-def test_get_iou_status(db):
-    entry1 = schemas.EntryCreate(
-        sender="Test Entry 1",
-        amount=100.00,
-        description="A test entry"
-    )
-    entry2 = schemas.EntryCreate(
-        sender="Test Entry 2",
+@pytest.fixture
+def entry2():
+    return schemas.EntryCreate(
+        sender="Bob",
+        recipient="Alice",
         amount=50.00,
         description="Another test entry"
     )
+
+
+def test_create_entry(db, entry1):
+    created_entry = crud.create_entry(db, entry1)
+    assert created_entry.sender == entry1.sender
+    assert created_entry.recipient == entry1.recipient
+    assert created_entry.amount == entry1.amount
+    assert created_entry.description == entry1.description
+
+
+def test_get_entries(db, entry1):
+    created_entry = crud.create_entry(db, entry1)
+    entries = crud.get_entries(db)
+    assert len(entries) == 1
+    assert entries[0].sender == entry1.sender
+    assert entries[0].recipient == entry1.recipient
+    assert entries[0].amount == entry1.amount
+    assert entries[0].description == entry1.description
+
+
+def test_get_iou_status(db, entry1, entry2):
+    
     crud.create_entry(db, entry1)
     crud.create_entry(db, entry2)
-    iou_status = crud.get_iou_status(db)
-    assert len(iou_status) == 2
-    assert iou_status[0].sender == entry1.sender
-    assert iou_status[0].amount == entry1.amount
-    assert iou_status[1].sender == entry2.sender
-    assert iou_status[1].amount == entry2.amount
+    iou_status = crud.get_pairs(db, user1=entry1.sender, user2=entry1.recipient)
+    assert iou_status[0] == [('Alice', 'Bob', 100.0)]
+    assert iou_status[1] == [('Bob', 'Alice', 50.0)]
 
 
 def test_get_max_sum_name(db):
     entry1 = schemas.EntryCreate(
-        sender="Test Entry 1",
+        sender="Alice",
+        recipient="Bob",
         amount=100.00,
         description="A test entry"
     )
     entry2 = schemas.EntryCreate(
-        sender="Test Entry 2",
+        sender="Fred",
+        recipient="Linda",
         amount=50.00,
         description="Another test entry"
     )
@@ -65,21 +67,21 @@ def test_get_max_sum_name(db):
     max_sum_name = crud.get_max_sum_name(db)
     assert max_sum_name['sender'] == entry1.sender
 
-def test_get_entry(db, entry):
-    created_entry = crud.create_entry(db, entry)
-    retrieved_entry = crud.get_entry(db, created_entry.id)
-    assert retrieved_entry.sender == entry.sender
-    assert retrieved_entry.amount == entry.amount
-    assert retrieved_entry.description == entry.description
+def test_get_entry(db, entry1):
+    crud.create_entry(db, entry1)
+    retrieved_entry = crud.get_entry(db, 1)
+    assert retrieved_entry.sender == entry1.sender
+    assert retrieved_entry.amount == entry1.amount
+    assert retrieved_entry.description == entry1.description
 
-def test_delete_entry(db, entry):
-    created_entry = crud.create_entry(db, entry)
+def test_delete_entry(db, entry1):
+    created_entry = crud.create_entry(db, entry1)
     deleted_entry = crud.delete_entry(db, created_entry)
     assert deleted_entry.deleted == True
 
-def test_get_entries_with_deleted(db, entry):
-    created_entry1 = crud.create_entry(db, entry)
-    created_entry2 = crud.create_entry(db, entry)
+def test_get_entries_with_deleted(db, entry1):
+    created_entry1 = crud.create_entry(db, entry1)
+    created_entry2 = crud.create_entry(db, entry1)
     deleted_entry = crud.delete_entry(db, created_entry2)
     assert len(crud.get_entries(db)) == 1
     

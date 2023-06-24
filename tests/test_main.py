@@ -8,18 +8,20 @@ from app import crud, schemas
 from app.database import engine, Base
 
 import pytest
-import tempfile
 
 
 @pytest.fixture
 def entries():
     return [
-        schemas.EntryCreate(sender="Jane Smith", amount=100.0,
+        schemas.EntryCreate(sender="Alice",
+                            recipient="Bob",
+                            amount=100.0,
                             description="Test entry 1"),
-        schemas.EntryCreate(sender="John Doe", amount=50.0,
+        schemas.EntryCreate(sender="Bob",
+                            recipient="Alice",
+                            amount=50.0,
                             description="Test entry 2")
     ]
-
 
 # TODO: Handle the database setup in a pytest fixture
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -54,6 +56,7 @@ def test_create_entries(db: Session, entries):
 
         created_entry = response.json()
         assert created_entry["sender"] == entry.sender
+        assert created_entry["recipient"] == entry.recipient
         assert created_entry["amount"] == entry.amount
         assert created_entry["description"] == entry.description
         assert "id" in created_entry
@@ -66,20 +69,20 @@ def test_read_entries(db: Session, entries):
     assert len(retrieved_entries) == len(entries)
     for i, entry in enumerate(entries):
         assert retrieved_entries[i]["sender"] == entry.sender
+        assert retrieved_entries[i]["recipient"] == entry.recipient
         assert retrieved_entries[i]["amount"] == entry.amount
         assert retrieved_entries[i]["description"] == entry.description
 
 
 def test_read_iou_status(db: Session, entries):
-    response = client.get("/iou_status/")
+    user1 = entries[0].sender
+    user2 = entries[0].recipient
+    response = client.get(f"/iou_status/?user1={user1}&user2={user2}")
     assert response.status_code == 200
     iou_status = response.json()
-    assert len(iou_status) == 2
-    assert iou_status[0]["sender"] == entries[0].sender
-    assert iou_status[0]["amount"] == entries[0].amount
-    assert iou_status[1]["sender"] == entries[1].sender
-    assert iou_status[1]["amount"] == entries[1].amount
-
+    assert iou_status["user1"] == entries[0].sender
+    assert iou_status["user2"] == entries[0].recipient
+    assert iou_status["amount"] == entries[0].amount - entries[1].amount
 
 # Temporary workaround for database cleanup
 def test_cleanup():
