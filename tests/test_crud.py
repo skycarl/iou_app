@@ -23,6 +23,16 @@ def entry2():
         description="Another test entry"
     )
 
+@pytest.fixture
+def entry3():
+    return schemas.EntryCreate(
+        conversation_id=1,
+        sender="Alice",
+        recipient="Frank",
+        amount=15.00,
+        description="Test entry in different conversation"
+    )
+
 
 def test_create_entry(db, entry1):
     created_entry = crud.create_entry(db, entry1)
@@ -42,10 +52,11 @@ def test_get_entries(db, entry1):
     assert entries[0].description == entry1.description
 
 
-def test_get_iou_status(db, entry1, entry2):
+def test_get_iou_status(db, entry1, entry2, entry3):
     
     crud.create_entry(db, entry1)
     crud.create_entry(db, entry2)
+    crud.create_entry(db, entry3)
     iou_status = crud.get_pairs(db, conversation_id=entry1.conversation_id, user1=entry1.sender, user2=entry1.recipient)
     assert iou_status[0] == [('Alice', 'Bob', 100.0)]
     assert iou_status[1] == [('Bob', 'Alice', 50.0)]
