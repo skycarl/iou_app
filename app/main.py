@@ -46,11 +46,6 @@ def read_iou_status(conversation_id, user1, user2, db: Session = Depends(get_db)
     return iou_status
 
 
-@app.get("/max_sum_name/") # todo maybe rename this who pays for a pair of people?
-def max_sum_name(db: Session = Depends(get_db)):
-    name = crud.get_max_sum_name(db)
-    return name
-
 @app.delete("/delete/{entry_id}")
 def delete_entry(entry_id: int, db: Session = Depends(get_db)):
     entry = crud.get_entry(db, entry_id)

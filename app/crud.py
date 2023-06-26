@@ -47,14 +47,6 @@ def get_pairs(db: Session, conversation_id: int, user1: str, user2: str):
     return user1_as_sender, user2_as_sender
 
 
-def get_max_sum_name(db: Session):
-    result = db.query(models.Entry.sender,
-                      models.Entry.amount).filter(models.Entry.deleted == False).group_by(models.Entry.sender).order_by(models.Entry.amount.desc()).first()
-    if result:
-        return {"sender": result[0], "amount": result[1]}
-    return "No entries found"
-
-
 def delete_entry(db: Session, entry: models.Entry):
     entry.deleted = True
     db.commit()

@@ -62,26 +62,6 @@ def test_get_iou_status(db, entry1, entry2, entry3):
     assert iou_status[1] == [('Bob', 'Alice', 50.0)]
 
 
-def test_get_max_sum_name(db):
-    entry1 = schemas.EntryCreate(
-        conversation_id=0,
-        sender="Alice",
-        recipient="Bob",
-        amount=100.00,
-        description="A test entry"
-    )
-    entry2 = schemas.EntryCreate(
-        conversation_id=0,
-        sender="Fred",
-        recipient="Linda",
-        amount=50.00,
-        description="Another test entry"
-    )
-    crud.create_entry(db, entry1)
-    crud.create_entry(db, entry2)
-    max_sum_name = crud.get_max_sum_name(db)
-    assert max_sum_name['sender'] == entry1.sender
-
 def test_get_entry(db, entry1):
     crud.create_entry(db, entry1)
     retrieved_entry = crud.get_entry(db, 1)
