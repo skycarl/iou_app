@@ -1,5 +1,9 @@
 """Utility functions for the app."""
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def compute_iou_status(query1, query2):
     """Compute the IOU status between two users.
 
@@ -25,7 +29,11 @@ def compute_iou_status(query1, query2):
         iou_status = {"user1": query1[0][0], "user2": query1[0][1], "amount": user1_sum - user2_sum}
     elif user2_sum > user1_sum:
         iou_status = {"user1": query2[0][0], "user2": query2[0][1], "amount": user2_sum - user1_sum}
+    elif user1_sum == user2_sum:
+        iou_status = {"user1": query1[0][0], "user2": query1[0][1], "amount": 0.}
     else:
-        iou_status = {"user1": query1[0][0], "user2": query1[0][1], "amount": 0}
+        err_msg = f"IOU status not found with query1={query1} and query2={query2}"
+        logger.error(err_msg)
+        raise ValueError(err_msg)
 
     return iou_status

@@ -88,6 +88,18 @@ def test_read_iou_status(db: Session, entries):
     assert iou_status["user2"] == entries[0].recipient
     assert iou_status["amount"] == entries[0].amount - entries[1].amount
 
+# TODO: parametrize theses iou_status tests
+def test_read_iou_status_users_not_in_conversation(db: Session, entries):
+    user1 = 'NotAUser1'
+    user2 = 'NotAUser2'
+    conversation_id = entries[0].conversation_id
+    response = client.get(f"/iou_status/?conversation_id={conversation_id}&user1={user1}&user2={user2}")
+    assert response.status_code == 200
+    iou_status = response.json()
+    assert iou_status["user1"] == user1
+    assert iou_status["user2"] == user2
+    assert iou_status["amount"] == 0.
+
 # Temporary workaround for database cleanup
 def test_cleanup():
     Base.metadata.drop_all(bind=engine)
