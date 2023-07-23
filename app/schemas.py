@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class EntryBase(BaseModel):
@@ -9,6 +9,13 @@ class EntryBase(BaseModel):
     amount: float
     description: Optional[str] = None
 
+    @validator('amount')
+    def validate_amount(cls, amount):
+        """Validate that amount is positive"""
+
+        if amount <= 0:
+            raise ValueError('Amount must be positive')
+        return amount
 
 class EntryCreate(EntryBase):
     pass

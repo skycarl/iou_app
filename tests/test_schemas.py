@@ -1,3 +1,4 @@
+import pytest
 from app.schemas import EntryBase, EntryCreate, Entry, IOUStatus
 
 
@@ -8,6 +9,15 @@ def test_entry_base():
     assert entry.recipient == "Bob"
     assert entry.amount == 23.99
     assert entry.description is None
+
+
+def test_entry_base_negative_amount():
+    entry_dict = {"conversation_id": 0, "sender": "Alice", "recipient": "Bob", "amount": -23.99}
+
+    with pytest.raises(ValueError) as e:
+        EntryBase(**entry_dict)
+
+    assert 'Amount must be positive' in str(e.value)
 
 
 def test_entry_create():
