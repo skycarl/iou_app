@@ -131,6 +131,9 @@ dmypy.json
 # VS Code files
 .vscode/
 
+# MacOS
+.DS_Store
+
 # Project-specific files
 iou_app.db
 test.db
