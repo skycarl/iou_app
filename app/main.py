@@ -8,6 +8,12 @@ from . import crud
 from . import utils
 from .database import SessionLocal, engine
 
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
 logger = logging.getLogger(__name__)
 
 
