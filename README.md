@@ -14,6 +14,12 @@ How to run locally
 uvicorn app.main:app --reload
 ```
 
+within container
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
 ## MVP features
 
 - [x] Create IOU
@@ -23,7 +29,9 @@ uvicorn app.main:app --reload
 - [x] Add recipient to IOU
 - [x] Add conversation ID
 - [x] Change IOU status to be for each pair of participants, e.g., who owes who how much
-- [ ] Add "who should pay" endpoint (have to choose between 2 users)
+- [x] Update response when user isn't found in a query
+- [x] Ensure IOUs are positive
+- [ ] Switch to postgreSQL database rather than sqlite
  
 ## Feature ideas
 
@@ -32,3 +40,9 @@ uvicorn app.main:app --reload
 - [ ] Split bill between everyone (or specified users in chat)
 - [ ] Group participants (e.g., by household)
 - [ ] Settle IOUs (e.g., figure out who owes who how much and add negative amount to transactions)
+- [ ] List all transactions
+- [ ] Request an IOU (have someone confirm? or nah?)
+- [ ] When validating users, suggest a close match, e.g., "did you mean XYZ?"
+- [ ] Validate that users are a member of the conversation
+    - [ ] First stage is to have this in the bot (since that has awareness of the group text). Second level of maturity is to handle it in the backend 
+- [ ] Clean up images -- can probably just use a single image for both containers to reduce CI demands
