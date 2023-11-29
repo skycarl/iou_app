@@ -1,6 +1,7 @@
 """Utility functions for the app."""
 
 import logging
+from app.iou.models import EntryModel
 
 logger = logging.getLogger(__name__)
 
@@ -37,3 +38,15 @@ def compute_iou_status(query1, query2):
         raise ValueError(err_msg)
 
     return iou_status
+
+def query_for_user(db, user1, user2, conversation_id):
+    """Query the database for all entries between two users."""
+
+    query = db.query(EntryModel.sender,
+                    EntryModel.recipient,
+                    EntryModel.amount).filter(
+        EntryModel.deleted == False).filter(
+        EntryModel.conversation_id == conversation_id).filter(
+        EntryModel.sender == user1, EntryModel.recipient == user2).all()
+    
+    return query

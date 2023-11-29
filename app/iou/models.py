@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, text, func, Boolean
-from .database import Base
+from app.core.db.session import Base
 
-
-class Entry(Base):
+class EntryModel(Base):
     __tablename__ = "entries"
 
     id = Column(Integer, primary_key=True, index=True)

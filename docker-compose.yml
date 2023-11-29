@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   db:
-    container_name: db
+    container_name: boilerplate_db
     image: postgres
     restart: always
     ports:
@@ -14,7 +14,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
 
   pgadmin:
-    container_name: pgadmin
+    container_name: boilerplate_pgadmin
     image: dpage/pgadmin4
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
@@ -25,15 +25,12 @@ services:
       - db
 
   app:
-    container_name: app
-    build: # TODO migrate this to CI rather than building here
+    container_name: boilerplate_app
+    build: 
       context: .
-      dockerfile: Dockerfile
-    # command: bash -c "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-    image: iou_app
-    env_file:
-      - .env
-    volumes: # is this needed?
+      dockerfile: .docker/Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
       - .:/app
     ports:
       - 8000:8000
