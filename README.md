@@ -1,28 +1,12 @@
 <h1 align="center"> 
-🍲  FastAPI Boilerplate
+🍲  IOU App
 </h1>
 
 <h2 align="center">
-  The simplest production ready Django like FastAPI boilerplate 🐍
+  Simple app for IOU's
 </h2>
 
-<img src="https://github.com/rawheel/fastapi-boilerplate/blob/main/media/fastapi%20boilerplate%20cover.png" alt="fastapi boilerplate">
-
----
-
-# 💎 Features
-
-✅ Production ready with one docker-compose command. \
-✅ Similar to Django Code Structure. \
-✅ Local dockerized db.\
-✅ Dockerized PgAdmin to check the db records.\
-✅ Migrations, Serializers and ORM configured.\
-✅ CRUD APIs (IOU App).\
-✅ Token Authentication.\
-✅ Logging Mechanism.\
-✅ Testcases TDD with Pytest. \
-✅ Seperate Database(Sqlite) and mock session configured for test cases.\
-✅ Poetry dependency management and packaging made easy. (Better than pip)
+<img src="https://github.com/rawheel/fastapi-boilerplate/blob/main/media/fastapi%20boilerplate%20cover.png" alt="IOU App">
 
 
 # ⚒️ Techologies Used
@@ -40,7 +24,7 @@
 # 🚀 Up and run in 5 mins 🕙
 Make sure you have docker and docker-compose installed [docker installation guide](https://docs.docker.com/compose/install/)
 ## Step 1
-create **.env** file in root folder fastapi-boilerplate/.env
+create **.env** file in root folder iou_app/.env
 ```
 DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/boiler_plate_db
 DB_USER=postgres
@@ -69,3 +53,57 @@ docker-compose up
 - PgAdmin on `localhost:5050`
 
 <img src="https://github.com/rawheel/fastapi-boilerplate/blob/main/media/pgadmin.png" alt="fastapi boilerplate">
+
+
+## TODO:
+
+- Add split endpoint
+
+# IOU app
+
+A simple app to keep track of IOUs between people.
+
+## Use case
+
+Anna and Joey are friends. Anna paid for something (dinner, movie tickets, etc) for Joey. Rather than sending Joey's half of the bill to Anna through Zelle/Venmo/etc, Joey can just "send" Anna money through the app. The app will keep track of who owes who how much, and anyone can query the app to see who should pay for the next thing so that people stay mostly even. 
+
+## Run
+
+How to run locally
+
+```bash
+uvicorn app.main:app --reload
+```
+
+within container
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+## MVP features
+
+- [x] Create IOU
+- [x] List IOUs
+- [x] Delete IOU
+- [x] Find participant with max IOU
+- [x] Add recipient to IOU
+- [x] Add conversation ID
+- [x] Change IOU status to be for each pair of participants, e.g., who owes who how much
+- [x] Update response when user isn't found in a query
+- [x] Ensure IOUs are positive
+- [ ] Switch to postgreSQL database rather than sqlite
+ 
+## Feature ideas
+
+- [ ] Recurring IOU
+- [ ] Support multiple chats (e.g. group by chat ID)
+- [ ] Split bill between everyone (or specified users in chat)
+- [ ] Group participants (e.g., by household)
+- [ ] Settle IOUs (e.g., figure out who owes who how much and add negative amount to transactions)
+- [ ] List all transactions
+- [ ] Request an IOU (have someone confirm? or nah?)
+- [ ] When validating users, suggest a close match, e.g., "did you mean XYZ?"
+- [ ] Validate that users are a member of the conversation
+    - [ ] First stage is to have this in the bot (since that has awareness of the group text). Second level of maturity is to handle it in the backend 
+- [ ] Add split endpoint to split a charge between all chat members (or specified people)
