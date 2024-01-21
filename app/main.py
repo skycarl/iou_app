@@ -11,7 +11,7 @@ load_dotenv(".env")
 
 root_router = APIRouter()
 
-app = FastAPI(title="FastAPI Boiler Plate")
+app = FastAPI(title="IOU App API")
 app.add_middleware(DBSessionMiddleware, db_url=os.environ["DATABASE_URL"])
 
 app.include_router(main_router)

@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   db:
-    container_name: boilerplate_db
+    container_name: iou_db
     image: postgres
     restart: always
     ports:
@@ -14,7 +14,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
 
   pgadmin:
-    container_name: boilerplate_pgadmin
+    container_name: iou_pgadmin
     image: dpage/pgadmin4
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
@@ -25,7 +25,7 @@ services:
       - db
 
   app:
-    container_name: boilerplate_app
+    container_name: iou_app
     build: 
       context: .
       dockerfile: .docker/Dockerfile
@@ -39,7 +39,7 @@ services:
     restart: always
 
   bot:
-    container_name: bot
+    container_name: iou_bot
     image: iou_bot
     # command: bash -c "python -m app.main"
     depends_on:

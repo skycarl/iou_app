@@ -28,9 +28,9 @@ def init() -> None:
 
 
 def main() -> None:
-    logger.info("Initializing boiler plate")
+    logger.info("Initializing IOU App")
     init()
-    logger.info("Boiler plate finished initializing")
+    logger.info("IOU App finished initializing")
 
 
 if __name__ == "__main__":

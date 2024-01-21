@@ -1,5 +1,5 @@
 FROM python:3.10-slim-bullseye
-LABEL Boiler Plate
+LABEL version="0.1" description="Dockerfile for IOU app"
 
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc curl procps net-tools tini \
