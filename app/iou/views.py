@@ -16,7 +16,7 @@ router = APIRouter(dependencies=[Depends(verify_token)])
 
 @router.get("/entries", status_code=200)
 async def get_entries(
-    conversation_id: Optional[int] = None,
+    conversation_id: int,
     db: Session = Depends(get_db)
     ):
 
@@ -27,10 +27,9 @@ async def get_entries(
         list: An array of Entry objects.
     """
 
-    entries =  db.query(EntryModel).filter(EntryModel.deleted == False)
-
-    if conversation_id:
-        entries = entries.filter(EntryModel.conversation_id == conversation_id).all()
+    entries =  db.query(EntryModel).filter(
+        EntryModel.deleted == False).filter(
+            EntryModel.conversation_id == conversation_id).all()
 
     return entries
 
@@ -128,8 +127,8 @@ def read_iou_status(
     ):
 
     # query database for all entries that contain user1 or user2 as either sender or recipient
-    user1_as_sender = utils.query_for_user(db, user1, user2, conversation_id)
-    user2_as_sender = utils.query_for_user(db, user2, user1, conversation_id) # pylint: disable=arguments-out-of-order
+    user1_as_sender = utils.query_for_user(db, user1, user2, int(conversation_id))
+    user2_as_sender = utils.query_for_user(db, user2, user1, int(conversation_id)) # pylint: disable=arguments-out-of-order
     
     # TODO: refactor this to be more elegant. Maybe handle in the bot when we verify that the users are in the conversation?
     if user1_as_sender == user2_as_sender == []:
