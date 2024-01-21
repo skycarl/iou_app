@@ -58,7 +58,7 @@ def test_get_entry():
     Tests if the entries get request is successfull
     """
 
-    response = client.get(ENDPOINT, headers=HEADERS)
+    response = client.get(ENDPOINT + '?conversation_id=1', headers=HEADERS)
 
     # validates if the request was successfull
     assert response.status_code == 200
