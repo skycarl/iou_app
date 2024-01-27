@@ -1,70 +1,29 @@
-from typing import List
-import logging
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from . import models
-from . import schemas
-from . import crud
-from . import utils
-from .database import SessionLocal, engine
+import os
 
+from dotenv import load_dotenv
+from fastapi import APIRouter
+from fastapi import FastAPI
+from fastapi_sqlalchemy import DBSessionMiddleware
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+from app.core.logger import init_logging
+from app.core.main_router import router as main_router
+from app.iou import iou_router
 
-logger = logging.getLogger(__name__)
+load_dotenv('.env')
 
+root_router = APIRouter()
 
-models.Base.metadata.create_all(bind=engine)
+app = FastAPI(title='IOU App API')
+app.add_middleware(DBSessionMiddleware, db_url=os.environ['DATABASE_URL'])
 
-app = FastAPI()
+app.include_router(main_router)
+app.include_router(iou_router)
+app.include_router(root_router)
 
+init_logging()
 
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+if __name__ == '__main__':
+    # Use this for debugging purposes only
+    import uvicorn
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.post("/entries/", response_model=schemas.Entry)
-def create_entry(entry: schemas.EntryCreate, db: Session = Depends(get_db)):
-    return crud.create_entry(db=db, entry=entry)
-
-
-@app.get("/entries/", response_model=list[schemas.Entry])
-def read_entries(conversation_id, db: Session = Depends(get_db)):
-    if not conversation_id:
-        raise HTTPException(status_code=400, detail="Conversation ID not found in query")
-    entries = crud.get_entries(db, conversation_id=conversation_id)
-    return entries
-
-
-@app.get("/iou_status/", response_model=schemas.IOUStatus)
-def read_iou_status(conversation_id, user1, user2, db: Session = Depends(get_db)):
-    q1, q2 = crud.get_pairs(db, int(conversation_id), user1, user2)
-
-    # TODO: refactor this to be more elegant. Maybe handle in the bot when we verify that the users are in the conversation?
-    if q1 == q2 == []:
-        iou_status = {"user1": user1, "user2": user2, "amount": 0.}
-    else:
-        iou_status = utils.compute_iou_status(q1, q2)
-        
-    return iou_status
-
-
-@app.delete("/delete/{entry_id}")
-def delete_entry(entry_id: int, db: Session = Depends(get_db)):
-    entry = crud.get_entry(db, entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Entry not found")
-    entry = crud.delete_entry(db, entry)
-    return {"detail": f"Entry {entry_id} deleted"}
+    uvicorn.run(app, host='0.0.0.0', port=8001, log_level='debug')

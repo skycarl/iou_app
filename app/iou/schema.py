@@ -1,8 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel, validator
+
+from pydantic import BaseModel
+from pydantic import validator
 
 
-class EntryBase(BaseModel):
+class EntrySchema(BaseModel):
     conversation_id: int
     sender: str
     recipient: str
@@ -10,19 +12,12 @@ class EntryBase(BaseModel):
     description: Optional[str] = None
 
     @validator('amount')
-    def validate_amount(cls, amount):
+    def validate_amount(cls, amount): #pylint: disable=no-self-argument
         """Validate that amount is positive"""
 
         if amount <= 0:
             raise ValueError('Amount must be positive')
         return amount
-
-class EntryCreate(EntryBase):
-    pass
-
-
-class Entry(EntryBase):
-    id: int
 
     class Config:
         orm_mode = True

@@ -1,7 +1,10 @@
-# Byte-compiled / optimized / DLL files
+Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Test database
+test.db
 
 # C extensions
 *.so
@@ -102,6 +105,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+env.ini
 .env
 .venv
 env/
@@ -127,13 +131,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# VS Code files
-.vscode/
-
-# MacOS
+poetry.lock
 .DS_Store
-
-# Project-specific files
-iou_app.db
-test.db
