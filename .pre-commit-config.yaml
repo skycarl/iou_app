@@ -19,3 +19,4 @@ repos:
         args:
         - --fix
         - --exit-non-zero-on-fix
+        - --line-length=120
