@@ -27,7 +27,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-from app.core.db.session import Base # ruff: noqa
+from app.core.db.session import Base # noqa: E402
 
 target_metadata = Base.metadata
 
