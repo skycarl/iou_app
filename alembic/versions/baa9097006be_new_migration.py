@@ -1,12 +1,13 @@
 """New Migration
 
 Revision ID: baa9097006be
-Revises: 
+Revises:
 Create Date: 2023-01-01 18:24:48.148114
 
 """
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 
 # revision identifiers, used by Alembic.

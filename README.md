@@ -1,4 +1,4 @@
-<h1 align="center"> 
+<h1 align="center">
 🍲  IOU App
 </h1>
 
@@ -29,7 +29,7 @@ create **.env** file in root folder iou_app/.env
 DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/boiler_plate_db
 DB_USER=postgres
 DB_PASSWORD=password
-DB_NAME=boiler_plate_db 
+DB_NAME=boiler_plate_db
 PGADMIN_EMAIL=admin@admin.com
 PGADMIN_PASSWORD=admin
 X_TOKEN=12345678910
@@ -65,7 +65,7 @@ A simple app to keep track of IOUs between people.
 
 ## Use case
 
-Anna and Joey are friends. Anna paid for something (dinner, movie tickets, etc) for Joey. Rather than sending Joey's half of the bill to Anna through Zelle/Venmo/etc, Joey can just "send" Anna money through the app. The app will keep track of who owes who how much, and anyone can query the app to see who should pay for the next thing so that people stay mostly even. 
+Anna and Joey are friends. Anna paid for something (dinner, movie tickets, etc) for Joey. Rather than sending Joey's half of the bill to Anna through Zelle/Venmo/etc, Joey can just "send" Anna money through the app. The app will keep track of who owes who how much, and anyone can query the app to see who should pay for the next thing so that people stay mostly even.
 
 ## Run
 
@@ -93,7 +93,7 @@ python -m uvicorn app.main:app --reload
 - [x] Update response when user isn't found in a query
 - [x] Ensure IOUs are positive
 - [ ] Switch to postgreSQL database rather than sqlite
- 
+
 ## Feature ideas
 
 - [ ] Recurring IOU
@@ -105,5 +105,5 @@ python -m uvicorn app.main:app --reload
 - [ ] Request an IOU (have someone confirm? or nah?)
 - [ ] When validating users, suggest a close match, e.g., "did you mean XYZ?"
 - [ ] Validate that users are a member of the conversation
-    - [ ] First stage is to have this in the bot (since that has awareness of the group text). Second level of maturity is to handle it in the backend 
+    - [ ] First stage is to have this in the bot (since that has awareness of the group text). Second level of maturity is to handle it in the backend
 - [ ] Add split endpoint to split a charge between all chat members (or specified people)

@@ -1,11 +1,12 @@
 import os
+
 import orjson
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-load_dotenv(".env")
+load_dotenv('.env')
 
 Base = declarative_base()
 
@@ -21,7 +22,7 @@ def orjson_serializer(obj):
 
 
 engine = create_engine(
-    os.environ["DATABASE_URL"],
+    os.environ['DATABASE_URL'],
     # required for sqlite
     json_serializer=orjson_serializer,
     json_deserializer=orjson.loads,

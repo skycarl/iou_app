@@ -1,6 +1,10 @@
 import logging
 
-from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
+from tenacity import after_log
+from tenacity import before_log
+from tenacity import retry
+from tenacity import stop_after_attempt
+from tenacity import wait_fixed
 
 from app.core.db.session import SessionLocal
 
@@ -21,17 +25,17 @@ def init() -> None:
     try:
         db = SessionLocal()
         # Try to create session to check if DB is awake
-        db.execute("SELECT 1")
+        db.execute('SELECT 1')
     except Exception as e:
         logger.error(e)
         raise e
 
 
 def main() -> None:
-    logger.info("Initializing IOU App")
+    logger.info('Initializing IOU App')
     init()
-    logger.info("IOU App finished initializing")
+    logger.info('IOU App finished initializing')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
