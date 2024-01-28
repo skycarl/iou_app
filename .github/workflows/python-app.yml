@@ -67,3 +67,4 @@ jobs:
         poetry run pytest
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy_db
+        X_TOKEN: 12345678910
