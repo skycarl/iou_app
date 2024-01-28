@@ -6,9 +6,6 @@
   Simple app for IOU's
 </h2>
 
-<img src="https://github.com/rawheel/fastapi-boilerplate/blob/main/media/fastapi%20boilerplate%20cover.png" alt="IOU App">
-
-
 # ⚒️ Techologies Used
 
 - Alembic: For Database Migrations.
@@ -17,7 +14,7 @@
 - Pytests: For TDD or Unit Testing.
 - Poetry: Python dependency management and packaging made easy. (Better than pip)
 - Docker & docker-compose : For Virtualization.
-- postgresSQL: Database.
+- PostgreSQL: Database.
 - PgAdmin: To interact with the Postgres database sessions.
 - Loguru: Easiest logging ever done.
 
@@ -37,7 +34,7 @@ X_TOKEN=12345678910
 
 ## Step 2
 ```
-docker-compose up
+docker compose up
 ```
 
 # 🎉 Your Production Ready FastAPI CRUD backend app is up and running on `localhost:8000`
@@ -92,7 +89,7 @@ python -m uvicorn app.main:app --reload
 - [x] Change IOU status to be for each pair of participants, e.g., who owes who how much
 - [x] Update response when user isn't found in a query
 - [x] Ensure IOUs are positive
-- [ ] Switch to postgreSQL database rather than sqlite
+- [x] Switch to postgreSQL database rather than sqlite
 
 ## Feature ideas
 
