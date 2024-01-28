@@ -12,8 +12,13 @@ on:
 permissions:
   contents: read
 
+env:
+  IMAGE_NAME: iou_app
+  IMAGE_TAG: latest
+
 jobs:
-  build:
+  build-test-repo:
+    name: Build and test repository
 
     runs-on: ubuntu-latest
 
@@ -68,3 +73,30 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy_db
         X_TOKEN: 12345678910
+
+  build-push-docker:
+    name: Build and push docker image
+    needs: build-test-repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./.docker/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
