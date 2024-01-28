@@ -5,7 +5,7 @@ name: Build and test
 
 on:
   push:
-#    branches: [ "main" ] # temp comment out to test
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -13,14 +13,10 @@ permissions:
   contents: read
   packages: write
 
-env:
-  IMAGE_NAME: iou_app
-  IMAGE_TAG: latest
-
 jobs:
-  # Build and test the repository
+  # Build and test the project
   build-test-repo:
-    name: Build and test repository
+    name: Build and test project
 
     runs-on: ubuntu-latest
 
@@ -66,6 +62,10 @@ jobs:
     name: Build and push docker image
     needs: build-test-repo
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: iou_app
+      IMAGE_TAG: latest
 
     steps:
       - name: Checkout repository
