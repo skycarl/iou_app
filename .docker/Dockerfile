@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 LABEL version="0.1" description="Dockerfile for IOU app"
 
 RUN apt-get update \
