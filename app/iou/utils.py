@@ -44,7 +44,7 @@ def query_for_user(db, user1, user2, conversation_id):
     query = db.query(EntryModel.sender,
                     EntryModel.recipient,
                     EntryModel.amount).filter(
-        EntryModel.deleted is False).filter(
+        EntryModel.deleted == False).filter( # noqa: E712
         EntryModel.conversation_id == conversation_id).filter(
         EntryModel.sender == user1, EntryModel.recipient == user2).all()
 
