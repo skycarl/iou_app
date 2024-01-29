@@ -1,9 +1,7 @@
 """Utility functions for the app."""
-import logging
+from loguru import logger
 
 from app.iou.models import EntryModel
-
-logger = logging.getLogger(__name__)
 
 def compute_iou_status(query1, query2):
     """Compute the IOU status between two users.
