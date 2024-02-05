@@ -93,6 +93,7 @@ python -m uvicorn app.main:app --reload
 
 ## Feature ideas
 
+- [ ] Add version endpoints to both app and bot
 - [ ] Recurring IOU
 - [ ] Support multiple chats (e.g. group by chat ID)
 - [ ] Split bill between everyone (or specified users in chat)
