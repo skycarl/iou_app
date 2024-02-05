@@ -41,7 +41,7 @@ services:
 
   bot:
     container_name: iou_bot
-    image: iou_bot:latest
+    image: ghcr.io/skycarl/iou_bot:latest
     command: bash -c "python -m app.main"
     depends_on:
       - app
