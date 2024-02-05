@@ -6,7 +6,7 @@ authors = ["Skyler Carlson"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-fastapi = "^0.97.0"
+fastapi = "^0.109.1"
 FastAPI-SQLAlchemy = "^0.2.1"
 orjson = "^3.9.1"
 pydantic = "^1.10.9"
