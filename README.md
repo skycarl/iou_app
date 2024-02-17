@@ -78,6 +78,14 @@ within container
 python -m uvicorn app.main:app --reload
 ```
 
+### Pre-commit hooks
+
+How to run pre-commit hooks:
+
+```bash
+$ poetry run pre-commit run --all-files
+```
+
 ## MVP features
 
 - [x] Create IOU
