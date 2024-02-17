@@ -49,6 +49,9 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy_db
         X_TOKEN: 12345678910
 
+    - name: Cleanup test artifacts
+      run: rm -rf test.db && rm -rf app.log
+
     - name: Zip artifact for deployment
       run: zip release.zip ./* -r
 
