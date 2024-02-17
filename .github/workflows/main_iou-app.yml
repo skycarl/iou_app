@@ -28,7 +28,7 @@ jobs:
           name: iou-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: unzip iou-app/release.zip
 
 
       - name: Login to Azure
