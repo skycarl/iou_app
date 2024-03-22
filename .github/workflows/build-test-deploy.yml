@@ -99,6 +99,8 @@ jobs:
 
   # Deploy to Azure
   deploy:
+    name: Deploy to Azure
+    needs: build-test-repo
     runs-on: ubuntu-latest
     environment:
       name: 'Production'
