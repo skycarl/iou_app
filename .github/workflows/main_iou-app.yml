@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: iou-app
 
@@ -32,7 +32,7 @@ jobs:
 
 
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A69FF0DABFEF4C1A835BB7FFF88440CD }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EB097CFCE65F485BA72F8CABF70D0BED }}
