@@ -1,0 +1,130 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Build and test the project
+  build-test-repo:
+    name: Build and test project
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
+      run: poetry install --no-interaction
+
+    - name: Lint with ruff
+      uses: chartboost/ruff-action@v1
+      with:
+        args: --no-fix --line-length=120
+
+    - name: Test with pytest
+      run: |
+        poetry run pytest
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy_db
+        X_TOKEN: 12345678910
+
+    - name: Cleanup test artifacts
+      run: rm -rf test.db && rm -rf app.log
+
+    - name: Zip artifact for deployment
+      run: zip release.zip ./* -r
+
+    - name: Upload artifact for deployment jobs
+      uses: actions/upload-artifact@v3
+      with:
+        name: iou-app
+        path: |
+          release.zip
+          !venv/
+
+  # Build and push the Docker image
+  build-push-docker:
+    name: Build and push docker image
+    needs: build-test-repo
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: iou_app
+      IMAGE_TAG: latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./.docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+  # Deploy to Azure
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write #This is required for requesting the JWT
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: iou-app
+
+      - name: Unzip artifact for deployment
+        run: unzip iou-app/release.zip
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A69FF0DABFEF4C1A835BB7FFF88440CD }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EB097CFCE65F485BA72F8CABF70D0BED }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FCB164A2A295413789439CC9C4CFC4A7 }}
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v2
+        id: deploy-to-webapp
+        with:
+          app-name: 'iou-app'
+          slot-name: 'Production'
