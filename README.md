@@ -78,6 +78,12 @@ within container
 python -m uvicorn app.main:app --reload
 ```
 
+## Local development
+
+```bash
+$ poetry install
+```
+
 ### Pre-commit hooks
 
 How to run pre-commit hooks:
