@@ -59,7 +59,6 @@ jobs:
     - name: Upload artifact for deployment jobs
       uses: actions/upload-artifact@v4
       with:
-        name: iou-app
         path: |
           release.zip
           !venv/
@@ -115,7 +114,7 @@ jobs:
           name: iou-app
 
       - name: Unzip artifact for deployment
-        run: unzip iou-app.zip
+        run: unzip iou_app/release.zip
 
       - name: Login to Azure
         uses: azure/login@v2
