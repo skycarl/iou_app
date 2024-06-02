@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Build and test
+name: Build, test, deploy
 
 on:
   push:
@@ -64,35 +64,17 @@ jobs:
           release.zip
           !venv/
 
-  # Build and push the Docker image
-  build-push-docker:
-    name: Build and push docker image
-    needs: build-test-repo
+  deploy:
+    name: Deploy to Render
     runs-on: ubuntu-latest
-
-    env:
-      IMAGE_NAME: iou_app
-      IMAGE_TAG: latest
-
+    needs: build-test-repo
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./.docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+      - name: Deploy
+        # Only run this step if the branch is main
+        if: github.event.pull_request.merged == true
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl "$deploy_url"
