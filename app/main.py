@@ -9,7 +9,8 @@ from app.core.logger import init_logging
 from app.core.main_router import router as main_router
 from app.iou import iou_router
 
-load_dotenv('.env')
+if os.getenv('ENV', 'production') == 'dev':
+    load_dotenv('.env.dev')
 
 root_router = APIRouter()
 

@@ -6,7 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-load_dotenv('.env')
+if os.getenv('ENV', 'production') == 'dev':
+    load_dotenv('.env.dev')
 
 Base = declarative_base()
 
