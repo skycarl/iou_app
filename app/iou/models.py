@@ -1,3 +1,4 @@
+from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -14,7 +15,7 @@ class EntryModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     datetime = Column(DateTime, default=func.now(), server_default=text('CURRENT_TIMESTAMP'))
-    conversation_id = Column(Integer)
+    conversation_id = Column(BigInteger)
     sender = Column(String)
     recipient = Column(String)
     amount = Column(Float)
