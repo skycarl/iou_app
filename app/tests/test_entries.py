@@ -6,7 +6,8 @@ from app.core.db.mock_session import engine
 from app.core.db.mock_session import test_client
 from app.core.db.session import Base
 
-load_dotenv('.env')
+if os.getenv('ENV', 'production') == 'dev':
+    load_dotenv('.env.dev')
 
 # It drops everything from the db and then recreate each time tests runs
 Base.metadata.drop_all(bind=engine)

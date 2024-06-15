@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import validator
+from pydantic import field_validator
 
 
 class EntrySchema(BaseModel):
@@ -11,7 +11,7 @@ class EntrySchema(BaseModel):
     amount: float
     description: Optional[str] = None
 
-    @validator('amount')
+    @field_validator('amount')
     def validate_amount(cls, amount): #pylint: disable=no-self-argument
         """Validate that amount is positive"""
 
