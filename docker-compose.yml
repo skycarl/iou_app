@@ -40,6 +40,8 @@ services:
     restart: always
     environment:
       - ENV=${ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - X_TOKEN=${X_TOKEN}
 
   bot:
     container_name: iou_bot
