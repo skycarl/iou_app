@@ -39,7 +39,7 @@ services:
       - db
     restart: always
     environment:
-      - ENV=dev
+      - ENV=${ENV}
 
   bot:
     container_name: iou_bot
