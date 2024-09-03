@@ -55,6 +55,7 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - X_TOKEN=${X_TOKEN}
+      - APP_URL=${APP_URL}
 
 volumes:
   db_data:
