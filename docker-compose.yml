@@ -4,7 +4,9 @@ services:
 
   db:
     container_name: iou_db
-    image: postgres
+    image: postgres:latest
+    volumes:
+      - /Users/skylercarlson/repos/iou_app/db_data:/var/lib/postgresql/data
     restart: always
     ports:
       - 5432:5432
@@ -53,3 +55,6 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - X_TOKEN=${X_TOKEN}
+
+volumes:
+  db_data:
