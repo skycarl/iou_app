@@ -134,3 +134,6 @@ dmypy.json
 .DS_Store
 
 db_data/
+*.json
+.ruff_cache/
+.op/

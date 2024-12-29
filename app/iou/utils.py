@@ -1,9 +1,11 @@
 """Utility functions for the app."""
+from typing import List
+
 from loguru import logger
 
-from app.iou.models import EntryModel
+from app.iou.schema import EntrySchema
 
-def compute_iou_status(query1, query2):
+def compute_iou_status(query1: List[EntrySchema], query2: List[EntrySchema]):
     """Compute the IOU status between two users.
 
     Parameters
@@ -21,31 +23,19 @@ def compute_iou_status(query1, query2):
     """
 
     # Compute the sum of all entries between user1 and user2, negating the amount if user1 is the sender
-    user1_sum = sum([entry[2] for entry in query1])
-    user2_sum = sum([entry[2] for entry in query2])
+    user1_sum = sum([entry.amount for entry in query1])
+    user2_sum = sum([entry.amount for entry in query2])
 
     # Compute the IOU status
     if user1_sum > user2_sum:
-        iou_status = {'user1': query1[0][0], 'user2': query1[0][1], 'amount': user1_sum - user2_sum}
+        iou_status = {'user1': query1[0].sender, 'user2': query1[0].recipient, 'amount': user1_sum - user2_sum}
     elif user2_sum > user1_sum:
-        iou_status = {'user1': query2[0][0], 'user2': query2[0][1], 'amount': user2_sum - user1_sum}
+        iou_status = {'user1': query2[0].sender, 'user2': query2[0].recipient, 'amount': user2_sum - user1_sum}
     elif user1_sum == user2_sum:
-        iou_status = {'user1': query1[0][0], 'user2': query1[0][1], 'amount': 0.}
+        iou_status = {'user1': query1[0].sender, 'user2': query1[0].recipient, 'amount': 0.}
     else:
         err_msg = f'IOU status not found with query1={query1} and query2={query2}'
         logger.error(err_msg)
         raise ValueError(err_msg)
 
     return iou_status
-
-def query_for_user(db, user1, user2, conversation_id):
-    """Query the database for all entries between two users."""
-
-    query = db.query(EntryModel.sender,
-                    EntryModel.recipient,
-                    EntryModel.amount).filter(
-        EntryModel.deleted == False).filter( # noqa: E712
-        EntryModel.conversation_id == conversation_id).filter(
-        EntryModel.sender == user1, EntryModel.recipient == user2).all()
-
-    return query

@@ -10,21 +10,24 @@
 
 ## Step 1
 
-Update **.env.*** file in root directory
+Add a **.env.*** file in root directory:
 
 ```
-DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/boiler_plate_db
-DB_USER=postgres
-DB_PASSWORD=password
-DB_NAME=boiler_plate_db
-PGADMIN_EMAIL=admin@admin.com
-PGADMIN_PASSWORD=admin
 X_TOKEN=12345678910
+TELEGRAM_BOT_TOKEN=<your bot token here>
+APP_URL=http://app:8000/api
+SPREADSHEET_ID=<ID for Google Sheets spreadsheet>
+```
+
+## Step 2
+
+```bash
+source set_env_vars.sh
 ```
 
 ## Step 2
 ```
-docker compose up
+docker compose up -d
 ```
 
 # Use case
@@ -43,7 +46,7 @@ How to run locally
 $ poetry install
 ```
 
-2. Run 
+2. Run
 ```bash
 poetry run python -m uvicorn app.main:app --reload
 ```

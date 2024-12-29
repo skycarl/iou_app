@@ -1,49 +1,20 @@
 version: "3.8"
 
 services:
-
-  db:
-    container_name: iou_db
-    image: postgres:latest
-    volumes:
-      - /Users/skylercarlson/repos/iou_app/db_data:/var/lib/postgresql/data
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-
-  pgadmin:
-    container_name: iou_pgadmin
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-    ports:
-      - 5050:80
-    depends_on:
-      - db
-
   app:
     container_name: iou_app
     image: iou_app:latest
     build:
       context: .
       dockerfile: .docker/Dockerfile
-    command: bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
       - 8000:8000
-    depends_on:
-      - db
     restart: always
-    environment:
-      - ENV=${ENV}
-      - DATABASE_URL=${DATABASE_URL}
-      - X_TOKEN=${X_TOKEN}
+    env_file:
+      - .env
 
   bot:
     container_name: iou_bot
@@ -52,10 +23,5 @@ services:
     depends_on:
       - app
     restart: always
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - X_TOKEN=${X_TOKEN}
-      - APP_URL=${APP_URL}
-
-volumes:
-  db_data:
+    env_file:
+      - .env

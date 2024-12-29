@@ -1,21 +1,13 @@
-import os
-
-from dotenv import load_dotenv
 from fastapi import APIRouter
 from fastapi import FastAPI
-from fastapi_sqlalchemy import DBSessionMiddleware
 
 from app.core.logger import init_logging
 from app.core.main_router import router as main_router
 from app.iou import iou_router
 
-if os.getenv('ENV', 'production') == 'dev':
-    load_dotenv('.env.dev')
-
 root_router = APIRouter()
 
 app = FastAPI(title='IOU App API')
-app.add_middleware(DBSessionMiddleware, db_url=os.environ['DATABASE_URL'])
 
 app.include_router(main_router)
 app.include_router(iou_router)
