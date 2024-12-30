@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.13-slim-bookworm
 LABEL version="0.1" description="Dockerfile for IOU app"
 
 RUN apt-get update \
@@ -20,4 +20,4 @@ RUN poetry config virtualenvs.create false \
   && poetry install --only main
 
 EXPOSE 8000
-ENTRYPOINT ["bash", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+ENTRYPOINT ["bash", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]

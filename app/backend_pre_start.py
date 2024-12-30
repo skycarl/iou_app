@@ -6,7 +6,7 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_fixed
 
-from app.core.db.session import SessionLocal
+from app.iou.google_sheets import get_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,9 +23,8 @@ wait_seconds = 1
 )
 def init() -> None:
     try:
-        db = SessionLocal()
-        # Try to create session to check if DB is awake
-        db.execute('SELECT 1')
+        service = get_service()
+        logger.info(f'Successfully connected to Google Sheets API: {service}')
     except Exception as e:
         logger.error(e)
         raise e
