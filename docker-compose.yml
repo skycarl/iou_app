@@ -3,7 +3,7 @@ version: "3.8"
 services:
   app:
     container_name: iou_app
-    image: iou_app:latest
+    image: ghcr.io/skycarl/iou_app:latest
     build:
       context: .
       dockerfile: .docker/Dockerfile
