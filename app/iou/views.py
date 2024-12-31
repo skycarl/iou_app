@@ -2,6 +2,7 @@ import datetime
 import os
 from typing import Callable
 
+import toml
 from fastapi import APIRouter
 from fastapi import Depends
 from loguru import logger
@@ -15,6 +16,16 @@ from app.iou.schema import EntrySchema
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
 
 router = APIRouter(dependencies=[Depends(verify_token)])
+
+def get_version():
+    with open('pyproject.toml', 'r') as f:
+        pyproject_data = toml.load(f)
+    return pyproject_data['tool']['poetry']['version']
+
+@router.get('/version')
+async def get_version_endpoint():
+    version = get_version()
+    return {'version': version}
 
 
 @router.get('/entries', status_code=200)
