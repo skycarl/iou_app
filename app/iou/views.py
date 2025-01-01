@@ -113,9 +113,9 @@ async def add_entry(payload: EntrySchema,
 
 @router.get('/iou_status/', status_code=200)
 async def read_iou_status(
-    conversation_id,
-    user1,
-    user2,
+    user1: str,
+    user2: str,
+    conversation_id: Optional[int] = None,
     service: Callable = Depends(get_service)
     ):
 
