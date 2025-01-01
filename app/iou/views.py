@@ -6,6 +6,7 @@ from typing import Optional
 import toml
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from loguru import logger
 
 from app.core.auth import verify_token
@@ -51,8 +52,7 @@ async def get_entries(
     values = result.get('values', [])
 
     if not values:
-        print('No data found.')
-        return
+        raise HTTPException(status_code=404, detail='No data found.')
 
     rows = values[1:]
     if conversation_id is not None:
