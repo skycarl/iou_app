@@ -30,16 +30,6 @@ jobs:
       with:
         python-version: "3.13"
 
-    - name: Check version bump
-      run: |
-        git fetch --tags
-        PREVIOUS_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-        CURRENT_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
-        if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
-          echo "Version has not been bumped. Please update the version in pyproject.toml."
-          exit 1
-        fi
-
     - name: Install Poetry
       uses: snok/install-poetry@v1
 
@@ -55,6 +45,23 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy_db
         X_TOKEN: 12345678910
+
+    - name: Check version bump
+      run: |
+        git fetch --tags
+        PREVIOUS_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+        CURRENT_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
+        if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
+          echo "Version has not been bumped. Please update the version in pyproject.toml."
+          exit 1
+        fi
+
+    - name: Create tag
+      if: success()
+      run: |
+        CURRENT_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
+        git tag v$CURRENT_VERSION
+        git push origin v$CURRENT_VERSION
 
     - name: Cleanup test artifacts
       run: rm -rf test.db && rm -rf app.log
