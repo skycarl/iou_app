@@ -24,10 +24,21 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v4
+
     - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
+
+    - name: Check version bump
+      run: |
+        git fetch --tags
+        PREVIOUS_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+        CURRENT_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
+        if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
+          echo "Version has not been bumped. Please update the version in pyproject.toml."
+          exit 1
+        fi
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
