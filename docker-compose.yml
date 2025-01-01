@@ -15,6 +15,12 @@ services:
     restart: always
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   bot:
     container_name: iou_bot
