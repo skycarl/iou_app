@@ -1,6 +1,7 @@
 import datetime
 import os
 from typing import Callable
+from typing import Optional
 
 import toml
 from fastapi import APIRouter
@@ -30,7 +31,7 @@ async def get_version_endpoint():
 
 @router.get('/entries', status_code=200)
 async def get_entries(
-    conversation_id: int,
+    conversation_id: Optional[int] = None,
     service: Callable = Depends(get_service)
     ):
 
@@ -54,10 +55,11 @@ async def get_entries(
         return
 
     rows = values[1:]
-    filtered_rows = [row for row in rows if row[1] == str(conversation_id)]
+    if conversation_id is not None:
+        rows = [row for row in rows if row[1] == str(conversation_id)]
 
     entries = []
-    for row in filtered_rows:
+    for row in rows:
         entry = EntrySchema(
             conversation_id=row[1],
             sender=row[2],
