@@ -31,3 +31,5 @@ services:
     restart: always
     env_file:
       - .env
+    volumes:
+      - ${HOST_PATH}:/app/config/
