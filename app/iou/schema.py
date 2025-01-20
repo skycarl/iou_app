@@ -35,3 +35,11 @@ class IOUStatus(BaseModel):
     user1: str
     user2: str
     amount: float
+
+
+class SplitSchema(BaseModel):
+    user1: str
+    user2: str
+    amount: float
+    conversation_id: Optional[int] = None
+    description: str

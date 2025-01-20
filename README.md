@@ -65,9 +65,8 @@ $ poetry run pre-commit run --all-files
 - [ ] Split bill between everyone (or specified users in chat)
 - [ ] Group participants (e.g., by household)
 - [ ] Settle IOUs (e.g., figure out who owes who how much and add negative amount to transactions)
-- [ ] List all transactions
-- [ ] Request an IOU (have someone confirm? or nah?)
 - [ ] When validating users, suggest a close match, e.g., "did you mean XYZ?"
 - [ ] Validate that users are a member of the conversation
     - [ ] First stage is to have this in the bot (since that has awareness of the group text). Second level of maturity is to handle it in the backend
-- [ ] Add split endpoint to split a charge between all chat members (or specified people)
+- [x] Add split endpoint to split a charge between all chat members (or specified people)
+- [ ] Fix automatic Google token refresh -- didnt seem to work when expired

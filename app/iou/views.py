@@ -14,6 +14,7 @@ from app.core.auth import verify_token
 from app.iou import utils
 from app.iou.google_sheets import get_service
 from app.iou.schema import EntrySchema
+from app.iou.schema import SplitSchema
 
 
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
@@ -144,3 +145,29 @@ async def read_iou_status(
     logger.success(f'Fetched status: {iou_status}')
 
     return iou_status
+
+@router.post('/split', status_code=201)
+async def split_amount(payload: SplitSchema, service: Callable = Depends(get_service)):
+    logger.info(f"Splitting {payload.amount} between {payload.user1} and {payload.user2}")
+    half = payload.amount / 2
+    payload1 = EntrySchema(
+        conversation_id=payload.conversation_id,
+        sender=payload.user1,
+        recipient=payload.user2,
+        amount=half,
+        description=f'Split: {payload.description}',
+        deleted=False
+    )
+    await add_entry(payload1, service)
+
+    payload2 = EntrySchema(
+        conversation_id=payload.conversation_id,
+        sender=payload.user2,
+        recipient=payload.user1,
+        amount=half,
+        description=f'Split: {payload.description}',
+        deleted=False
+    )
+    await add_entry(payload2, service)
+
+    return {'message': 'Split successful', 'amount': payload.amount}
