@@ -1,4 +1,5 @@
 import datetime
+from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
@@ -38,8 +39,8 @@ class IOUStatus(BaseModel):
 
 
 class SplitSchema(BaseModel):
-    user1: str
-    user2: str
+    conversation_id: str
+    payer: str
     amount: float
-    conversation_id: Optional[int] = None
+    participants: List[str]
     description: str

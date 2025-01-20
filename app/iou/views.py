@@ -7,6 +7,7 @@ import toml
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from loguru import logger
 from pydantic import ValidationError
 
@@ -148,26 +149,37 @@ async def read_iou_status(
 
 @router.post('/split', status_code=201)
 async def split_amount(payload: SplitSchema, service: Callable = Depends(get_service)):
-    logger.info(f"Splitting {payload.amount} between {payload.user1} and {payload.user2}")
-    half = payload.amount / 2
-    payload1 = EntrySchema(
-        conversation_id=payload.conversation_id,
-        sender=payload.user1,
-        recipient=payload.user2,
-        amount=half,
-        description=f'Split: {payload.description}',
-        deleted=False
-    )
-    await add_entry(payload1, service)
+    """
+    Split an amount evenly among a list of participants.
+    """
+    num_participants = len(payload.participants)
+    if num_participants < 2:
+        return JSONResponse(
+            status_code=400,
+            content={'message': 'At least two participants are required for a split.'},
+        )
 
-    payload2 = EntrySchema(
-        conversation_id=payload.conversation_id,
-        sender=payload.user2,
-        recipient=payload.user1,
-        amount=half,
-        description=f'Split: {payload.description}',
-        deleted=False
-    )
-    await add_entry(payload2, service)
+    even_share = round(payload.amount / num_participants, 2)
 
-    return {'message': 'Split successful', 'amount': payload.amount}
+    entries = []
+    for participant in payload.participants:
+        if participant != payload.payer:
+            entry = EntrySchema(
+                conversation_id=payload.conversation_id,
+                sender=participant,
+                recipient=payload.payer,
+                amount=even_share,
+                description=f"Split: {payload.description}",
+                deleted=False,
+            )
+            entries.append(entry)
+
+    for entry in entries:
+        await add_entry(entry, service)
+
+    return {
+        'message': 'Split successful',
+        'amount': payload.amount,
+        'split_per_user': even_share,
+        'participants': payload.participants,
+    }
