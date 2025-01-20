@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from loguru import logger
+from pydantic import ValidationError
 
 from app.core.auth import verify_token
 from app.iou import utils
@@ -26,8 +27,7 @@ def get_version():
 
 @router.get('/version')
 async def get_version_endpoint():
-    version = get_version()
-    return {'version': version}
+    return {'version': get_version()}
 
 
 @router.get('/entries', status_code=200)
@@ -44,14 +44,19 @@ async def get_entries(
     """
 
     sheet = service.spreadsheets()
-    result = (
-        sheet.values()
-        .get(spreadsheetId=SPREADSHEET_ID, range='Sheet1')
-        .execute()
-    )
-    values = result.get('values', [])
+    try:
+        result = (
+            sheet.values()
+            .get(spreadsheetId=SPREADSHEET_ID, range='Sheet1')
+            .execute()
+        )
+        values = result.get('values', [])
+    except Exception as e:
+        logger.error(f'Failed to get entries with error: {e}')
+        raise HTTPException(status_code=400, detail='Failed to get entries')
 
     if not values:
+        logger.info(f'No data found with conversation_id: {conversation_id}')
         raise HTTPException(status_code=404, detail='No data found.')
 
     rows = values[1:]
@@ -59,16 +64,19 @@ async def get_entries(
         rows = [row for row in rows if row[1] == str(conversation_id)]
 
     entries = []
-    for row in rows:
-        entry = EntrySchema(
-            conversation_id=row[1],
-            sender=row[2],
-            recipient=row[3],
-            amount=row[4],
-            description=row[5],
-            timestamp=row[0]
-        )
-        entries.append(entry)
+    try:
+        for row in rows:
+            entry = EntrySchema(
+                conversation_id=row[1],
+                sender=row[2],
+                recipient=row[3],
+                amount=row[4],
+                description=row[5],
+                timestamp=row[0]
+            )
+            entries.append(entry)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail='Invalid data in Google Sheets')
 
     return entries
 
@@ -100,14 +108,18 @@ async def add_entry(payload: EntrySchema,
     body = {
         'values': values
     }
-    result = sheet.values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range='Sheet1',
-        valueInputOption='RAW',
-        body=body
-    ).execute()
+    try:
+        result = sheet.values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range='Sheet1',
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+    except Exception as e:
+        logger.error(f'Failed to add entry: {payload} with error: {e}')
+        raise HTTPException(status_code=400, detail='Failed to add entry')
 
-    logger.success(f'Added entry: {payload} with result: {result}')
+    logger.success(f'Added entry: {result}')
     return payload
 
 
@@ -128,5 +140,7 @@ async def read_iou_status(
         iou_status = {'user1': user1, 'user2': user2, 'amount': 0.}
     else:
         iou_status = utils.compute_iou_status(user1_as_sender, user2_as_sender)
+
+    logger.success(f'Fetched status: {iou_status}')
 
     return iou_status
