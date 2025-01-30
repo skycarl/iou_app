@@ -12,9 +12,9 @@ from loguru import logger
 from pydantic import ValidationError
 
 from app.core.auth import verify_token
-from app.iou import utils
 from app.iou.google_sheets import get_service
 from app.iou.schema import EntrySchema
+from app.iou.schema import IOUStatus
 from app.iou.schema import SplitSchema
 
 
@@ -131,20 +131,32 @@ async def read_iou_status(
     user2: str,
     conversation_id: Optional[int] = None,
     service: Callable = Depends(get_service)
-    ):
-
+):
     entries = await get_entries(conversation_id, service)
+    total_user1_owes = sum(float(e.amount) for e in entries if e.sender == user1 and e.recipient == user2)
+    total_user2_owes = sum(float(e.amount) for e in entries if e.sender == user2 and e.recipient == user1)
+    difference = total_user1_owes - total_user2_owes
 
-    user1_as_sender = [entry for entry in entries if entry.sender == user1 and entry.recipient == user2]
-    user2_as_sender = [entry for entry in entries if entry.sender == user2 and entry.recipient == user1]
-
-    if user1_as_sender == user2_as_sender == []:
-        iou_status = {'user1': user1, 'user2': user2, 'amount': 0.}
+    if difference == 0:
+        iou_status = IOUStatus(
+            owing_user=None,
+            owed_user=None,
+            amount=0.0
+        )
+    elif difference > 0:
+        iou_status = IOUStatus(
+            owing_user=user1,
+            owed_user=user2,
+            amount=difference
+        )
     else:
-        iou_status = utils.compute_iou_status(user1_as_sender, user2_as_sender)
+        iou_status = IOUStatus(
+            owing_user=user2,
+            owed_user=user1,
+            amount=abs(difference)
+        )
 
     logger.success(f'Fetched status: {iou_status}')
-
     return iou_status
 
 @router.post('/split', status_code=201)

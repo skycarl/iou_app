@@ -33,8 +33,8 @@ class EntrySchema(BaseModel):
 
 
 class IOUStatus(BaseModel):
-    user1: str
-    user2: str
+    owing_user: Optional[str]
+    owed_user: Optional[str]
     amount: float
 
 
