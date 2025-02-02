@@ -16,10 +16,15 @@ from app.iou.google_sheets import get_service
 from app.iou.schema import EntrySchema
 from app.iou.schema import IOUStatus
 from app.iou.schema import SplitSchema
+from app.iou.schema import User
+from app.iou.schema import UserUpdate
+from app.iou.user_db import load_user_db
 
 
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
+USER_DB_FILE = 'user_db.json'
 
+user_db = load_user_db(USER_DB_FILE)
 router = APIRouter(dependencies=[Depends(verify_token)])
 
 def get_version():
@@ -195,3 +200,39 @@ async def split_amount(payload: SplitSchema, service: Callable = Depends(get_ser
         'split_per_user': even_share,
         'participants': payload.participants,
     }
+
+@router.post('/users', status_code=201)
+async def add_user(new_user: User):
+    """
+    Add a new user. The username must be unique.
+    """
+    if any(u.username == new_user.username for u in user_db.users):
+        raise HTTPException(status_code=400, detail='User already exists')
+    user_db.users.append(new_user)
+    user_db.save_to_disk(USER_DB_FILE)
+    logger.success(f"Added user: {new_user.username}")
+    return new_user
+
+@router.get('/users/{username}', status_code=200)
+async def get_user(username: str):
+    """
+    Retrieve a user's conversation_id by username.
+    """
+    for user in user_db.users:
+        if user.username == username:
+            return {'username': user.username, 'conversation_id': user.conversation_id}
+    raise HTTPException(status_code=404, detail='User not found')
+
+@router.put('/users/{username}', status_code=200)
+async def update_user(username: str, update: UserUpdate):
+    """
+    Update a user's conversation_id.
+    """
+    for idx, user in enumerate(user_db.users):
+        if user.username == username:
+            # Update the conversation ID
+            user_db.users[idx].conversation_id = update.conversation_id
+            user_db.save_to_disk(USER_DB_FILE)
+            logger.success(f"Updated user: {username} with new conversation_id: {update.conversation_id}")
+            return user_db.users[idx]
+    raise HTTPException(status_code=404, detail='User not found')
