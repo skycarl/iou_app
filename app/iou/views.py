@@ -144,8 +144,8 @@ async def read_iou_status(
 
     if difference == 0:
         iou_status = IOUStatus(
-            owing_user=None,
-            owed_user=None,
+            owing_user=user1,
+            owed_user=user2,
             amount=0.0
         )
     elif difference > 0:
