@@ -4,7 +4,7 @@ version = "0.4.2"
 description = "IOU App"
 authors = ["Skyler Carlson"]
 packages = [
-    { include = "app" }
+    { include = "iou_app" }
 ]
 
 [tool.poetry.dependencies]
