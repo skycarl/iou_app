@@ -2,7 +2,7 @@ import os
 
 from loguru import logger
 
-from app.iou.schema import UserDB
+from iou_app.iou.schema import UserDB
 
 
 def load_user_db(file_path: str) -> UserDB:

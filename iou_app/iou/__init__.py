@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.iou.views import router
+from iou_app.iou.views import router
 
 API_STR = '/api'
 

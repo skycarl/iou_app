@@ -3,7 +3,7 @@ from typing import List
 
 from loguru import logger
 
-from app.iou.schema import EntrySchema
+from iou_app.iou.schema import EntrySchema
 
 def compute_iou_status(query1: List[EntrySchema], query2: List[EntrySchema]):
     """Compute the IOU status between two users.

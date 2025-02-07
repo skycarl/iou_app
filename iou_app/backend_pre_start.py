@@ -6,7 +6,7 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_fixed
 
-from app.iou.google_sheets import get_service
+from iou_app.iou.google_sheets import get_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

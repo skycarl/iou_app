@@ -12,14 +12,14 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from pydantic import ValidationError
 
-from app.core.auth import verify_token
-from app.iou.google_sheets import get_service
-from app.iou.schema import EntrySchema
-from app.iou.schema import IOUStatus
-from app.iou.schema import SplitSchema
-from app.iou.schema import User
-from app.iou.schema import UserUpdate
-from app.iou.user_db import load_user_db
+from iou_app.core.auth import verify_token
+from iou_app.iou.google_sheets import get_service
+from iou_app.iou.schema import EntrySchema
+from iou_app.iou.schema import IOUStatus
+from iou_app.iou.schema import SplitSchema
+from iou_app.iou.schema import User
+from iou_app.iou.schema import UserUpdate
+from iou_app.iou.user_db import load_user_db
 
 
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
