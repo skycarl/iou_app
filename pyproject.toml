@@ -1,8 +1,11 @@
 [tool.poetry]
 name = "app"
-version = "0.4.1"
+version = "0.4.2"
 description = "IOU App"
 authors = ["Skyler Carlson"]
+packages = [
+    { include = "app" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.13"
