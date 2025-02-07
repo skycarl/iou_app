@@ -1,6 +1,7 @@
 import datetime
 import os
 from typing import Callable
+from typing import List
 from typing import Optional
 
 import toml
@@ -236,3 +237,11 @@ async def update_user(username: str, update: UserUpdate):
             logger.success(f"Updated user: {username} with new conversation_id: {update.conversation_id}")
             return user_db.users[idx]
     raise HTTPException(status_code=404, detail='User not found')
+
+
+@router.get('/users/', status_code=200, response_model=List[User])
+async def get_users():
+    """
+    Retrieve all users.
+    """
+    return user_db.users

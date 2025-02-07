@@ -48,7 +48,7 @@ class SplitSchema(BaseModel):
 
 class User(BaseModel):
     username: str
-    conversation_id: str
+    conversation_id: Optional[str] = None
 
 class UserDB(BaseModel):
     users: List[User]
