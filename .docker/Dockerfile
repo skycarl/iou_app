@@ -20,4 +20,4 @@ RUN poetry config virtualenvs.create false \
   && poetry install --only main
 
 EXPOSE 8000
-ENTRYPOINT ["bash", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+ENTRYPOINT ["bash", "-c", "uvicorn iou_app.main:app --host 0.0.0.0 --port 8000"]
