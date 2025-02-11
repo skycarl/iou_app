@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: .docker/Dockerfile
-    command: bash -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "uvicorn iou_app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
@@ -23,7 +23,7 @@ services:
   bot:
     container_name: iou_bot
     image: ghcr.io/skycarl/iou_bot:latest
-    command: bash -c "python -m app.main"
+    command: bash -c "python -m iou_bot.main"
     depends_on:
       - app
     restart: always
