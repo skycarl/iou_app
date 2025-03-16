@@ -1,7 +1,6 @@
 import datetime
 from typing import Any
 from typing import List
-from typing import Optional
 
 import toml
 from fastapi import APIRouter
@@ -39,23 +38,22 @@ async def get_version_endpoint():
 
 @router.get('/entries', status_code=200)
 async def get_entries(
-    conversation_id: Optional[int] = None,
     table: Any = Depends(get_table)
 ):
     """
-    Gets all the entries listed in the database for the specified conversation ID
+    Gets all the entries listed in the database
 
     Returns:
         list: An array of Entry objects.
     """
     try:
-        items = ddb_get_entries(conversation_id, table)
+        items = ddb_get_entries(table)
     except Exception as e:
         logger.error(f'Failed to get entries with error: {e}')
         raise HTTPException(status_code=400, detail='Failed to get entries')
 
     if not items:
-        logger.info(f'No data found with conversation_id: {conversation_id}')
+        logger.info('No data found')
         raise HTTPException(status_code=404, detail='No data found.')
 
     entries = []
@@ -112,10 +110,9 @@ async def add_entry(
 async def read_iou_status(
     user1: str,
     user2: str,
-    conversation_id: Optional[int] = None,
     table: Any = Depends(get_table)
 ):
-    entries = await get_entries(conversation_id, table)
+    entries = await get_entries(table)
     total_user1_owes = sum(float(e.amount) for e in entries if e.sender == user1 and e.recipient == user2)
     total_user2_owes = sum(float(e.amount) for e in entries if e.sender == user2 and e.recipient == user1)
     difference = total_user1_owes - total_user2_owes

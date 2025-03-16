@@ -134,30 +134,18 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
     except ClientError as e:
         raise Exception('Failed to write item to DynamoDB') from e
 
-def get_entries(conversation_id: Optional[int] = None, table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
+def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
     """
     Gets entries from the DynamoDB table.
 
     Args:
-        conversation_id: Optional conversation ID to filter entries.
         table: DynamoDB table instance (injected by FastAPI)
 
     Returns:
         List of entries.
     """
     try:
-        if conversation_id is not None:
-            # Query items with the specific conversation_id
-            response = table.scan(
-                FilterExpression='conversation_id = :cid',
-                ExpressionAttributeValues={
-                    ':cid': str(conversation_id)
-                }
-            )
-        else:
-            # Get all entries
-            response = table.scan()
-
+        response = table.scan()
         return response.get('Items', [])
     except ClientError as e:
         logger.error(f"Error retrieving entries: {e}")
