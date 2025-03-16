@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "iou_app"
-version = "0.5.2"
+version = "0.6.0"
 description = "IOU App"
 authors = ["Skyler Carlson"]
 packages = [
@@ -28,3 +28,4 @@ google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.1"
 pandas = "^2.2.3"
 toml = "^0.10.2"
+boto3 = "^1.37.4"

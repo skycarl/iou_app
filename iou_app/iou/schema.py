@@ -50,12 +50,10 @@ class User(BaseModel):
     username: str
     conversation_id: Optional[str] = None
 
+
 class UserDB(BaseModel):
     users: List[User]
 
-    def save_to_disk(self, file_path: str) -> None:
-        with open(file_path, 'w') as f:
-            f.write(self.model_dump_json(indent=4))
 
 class UserUpdate(BaseModel):
     conversation_id: str

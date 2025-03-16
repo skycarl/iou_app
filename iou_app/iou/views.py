@@ -1,6 +1,5 @@
 import datetime
-import os
-from typing import Callable
+from typing import Any
 from typing import List
 from typing import Optional
 
@@ -13,19 +12,20 @@ from loguru import logger
 from pydantic import ValidationError
 
 from iou_app.core.auth import verify_token
-from iou_app.iou.google_sheets import get_service
+from iou_app.iou.ddb import create_user
+from iou_app.iou.ddb import get_all_users
+from iou_app.iou.ddb import get_entries as ddb_get_entries
+from iou_app.iou.ddb import get_table
+from iou_app.iou.ddb import get_user_by_username
+from iou_app.iou.ddb import get_users_table
+from iou_app.iou.ddb import update_user
+from iou_app.iou.ddb import write_item_to_dynamodb
 from iou_app.iou.schema import EntrySchema
 from iou_app.iou.schema import IOUStatus
 from iou_app.iou.schema import SplitSchema
 from iou_app.iou.schema import User
 from iou_app.iou.schema import UserUpdate
-from iou_app.iou.user_db import load_user_db
 
-
-SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
-USER_DB_FILE = 'user_db.json'
-
-user_db = load_user_db(USER_DB_FILE)
 router = APIRouter(dependencies=[Depends(verify_token)])
 
 def get_version():
@@ -37,92 +37,70 @@ def get_version():
 async def get_version_endpoint():
     return {'version': get_version()}
 
-
 @router.get('/entries', status_code=200)
 async def get_entries(
     conversation_id: Optional[int] = None,
-    service: Callable = Depends(get_service)
-    ):
-
+    table: Any = Depends(get_table)
+):
     """
     Gets all the entries listed in the database for the specified conversation ID
 
     Returns:
         list: An array of Entry objects.
     """
-
-    sheet = service.spreadsheets()
     try:
-        result = (
-            sheet.values()
-            .get(spreadsheetId=SPREADSHEET_ID, range='Sheet1')
-            .execute()
-        )
-        values = result.get('values', [])
+        items = ddb_get_entries(conversation_id, table)
     except Exception as e:
         logger.error(f'Failed to get entries with error: {e}')
         raise HTTPException(status_code=400, detail='Failed to get entries')
 
-    if not values:
+    if not items:
         logger.info(f'No data found with conversation_id: {conversation_id}')
         raise HTTPException(status_code=404, detail='No data found.')
 
-    rows = values[1:]
-    if conversation_id is not None:
-        rows = [row for row in rows if row[1] == str(conversation_id)]
-
     entries = []
     try:
-        for row in rows:
+        for item in items:
             entry = EntrySchema(
-                conversation_id=row[1],
-                sender=row[2],
-                recipient=row[3],
-                amount=row[4],
-                description=row[5],
-                timestamp=row[0]
+                conversation_id=item['conversation_id'],
+                sender=item['sender'],
+                recipient=item['recipient'],
+                amount=item['amount'],
+                description=item['description'],
+                timestamp=item['datetime']
             )
             entries.append(entry)
-    except ValidationError:
-        raise HTTPException(status_code=400, detail='Invalid data in Google Sheets')
+    except (ValidationError, KeyError) as e:
+        logger.error(f'Invalid data in DynamoDB: {e}')
+        raise HTTPException(status_code=400, detail='Invalid data in DynamoDB')
 
     return entries
 
 @router.post('/entries', status_code=201)
-async def add_entry(payload: EntrySchema,
-                    service: Callable = Depends(get_service)):
-
+async def add_entry(
+    payload: EntrySchema,
+    table: Any = Depends(get_table)
+):
     """
-    Add Entry in Google Sheets.
+    Add Entry in DynamoDB.
 
     Returns:
         Object: same payload which was sent with 201 status code on success.
     """
-
-    sheet = service.spreadsheets()
-
     payload.timestamp = datetime.datetime.now()
-    values = [
-        [
-            payload.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            payload.conversation_id,
-            payload.sender,
-            payload.recipient,
-            payload.amount,
-            payload.description,
-            payload.deleted
-        ]
-    ]
-    body = {
-        'values': values
+
+    item = {
+        'datetime': payload.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        'conversation_id': str(payload.conversation_id),
+        'sender': payload.sender,
+        'recipient': payload.recipient,
+        'amount': str(payload.amount),
+        'description': payload.description,
+        'deleted': str(payload.deleted)
     }
+
     try:
-        result = sheet.values().append(
-            spreadsheetId=SPREADSHEET_ID,
-            range='Sheet1',
-            valueInputOption='RAW',
-            body=body
-        ).execute()
+        result = write_item_to_dynamodb(item, table)
     except Exception as e:
         logger.error(f'Failed to add entry: {payload} with error: {e}')
         raise HTTPException(status_code=400, detail='Failed to add entry')
@@ -130,15 +108,14 @@ async def add_entry(payload: EntrySchema,
     logger.success(f'Added entry: {result}')
     return payload
 
-
 @router.get('/iou_status/', status_code=200)
 async def read_iou_status(
     user1: str,
     user2: str,
     conversation_id: Optional[int] = None,
-    service: Callable = Depends(get_service)
+    table: Any = Depends(get_table)
 ):
-    entries = await get_entries(conversation_id, service)
+    entries = await get_entries(conversation_id, table)
     total_user1_owes = sum(float(e.amount) for e in entries if e.sender == user1 and e.recipient == user2)
     total_user2_owes = sum(float(e.amount) for e in entries if e.sender == user2 and e.recipient == user1)
     difference = total_user1_owes - total_user2_owes
@@ -166,7 +143,10 @@ async def read_iou_status(
     return iou_status
 
 @router.post('/split', status_code=201)
-async def split_amount(payload: SplitSchema, service: Callable = Depends(get_service)):
+async def split_amount(
+    payload: SplitSchema,
+    table: Any = Depends(get_table)
+):
     """
     Split an amount evenly among a list of participants.
     """
@@ -193,7 +173,7 @@ async def split_amount(payload: SplitSchema, service: Callable = Depends(get_ser
             entries.append(entry)
 
     for entry in entries:
-        await add_entry(entry, service)
+        await add_entry(entry, table)
 
     return {
         'message': 'Split successful',
@@ -203,45 +183,72 @@ async def split_amount(payload: SplitSchema, service: Callable = Depends(get_ser
     }
 
 @router.post('/users', status_code=201)
-async def add_user(new_user: User):
+async def add_user(
+    new_user: User,
+    table: Any = Depends(get_users_table)
+):
     """
     Add a new user. The username must be unique.
     """
-    if any(u.username == new_user.username for u in user_db.users):
+    # Check if user exists
+    existing_user = get_user_by_username(new_user.username, table)
+    if existing_user:
         raise HTTPException(status_code=400, detail='User already exists')
-    user_db.users.append(new_user)
-    user_db.save_to_disk(USER_DB_FILE)
-    logger.success(f"Added user: {new_user.username}")
-    return new_user
+
+    # Create user in DynamoDB
+    user_data = new_user.model_dump()
+    try:
+        created_user = create_user(user_data, table)
+        logger.success(f"Added user: {new_user.username}")
+        return User(**created_user)
+    except Exception as e:
+        logger.error(f"Failed to create user: {e}")
+        raise HTTPException(status_code=400, detail='Failed to create user')
 
 @router.get('/users/{username}', status_code=200)
-async def get_user(username: str):
+async def get_user(
+    username: str,
+    table: Any = Depends(get_users_table)
+):
     """
     Retrieve a user's conversation_id by username.
     """
-    for user in user_db.users:
-        if user.username == username:
-            return {'username': user.username, 'conversation_id': user.conversation_id}
-    raise HTTPException(status_code=404, detail='User not found')
+    user_data = get_user_by_username(username, table)
+    if not user_data:
+        raise HTTPException(status_code=404, detail='User not found')
+    return {'username': user_data['username'], 'conversation_id': user_data.get('conversation_id')}
 
 @router.put('/users/{username}', status_code=200)
-async def update_user(username: str, update: UserUpdate):
+async def update_user_endpoint(
+    username: str,
+    update: UserUpdate,
+    table: Any = Depends(get_users_table)
+):
     """
     Update a user's conversation_id.
     """
-    for idx, user in enumerate(user_db.users):
-        if user.username == username:
-            # Update the conversation ID
-            user_db.users[idx].conversation_id = update.conversation_id
-            user_db.save_to_disk(USER_DB_FILE)
-            logger.success(f"Updated user: {username} with new conversation_id: {update.conversation_id}")
-            return user_db.users[idx]
-    raise HTTPException(status_code=404, detail='User not found')
+    # Check if user exists
+    existing_user = get_user_by_username(username, table)
+    if not existing_user:
+        raise HTTPException(status_code=404, detail='User not found')
 
+    # Update user in DynamoDB
+    try:
+        updated_user = update_user(username, update.model_dump(), table)
+        logger.success(f"Updated user: {username} with new conversation_id: {update.conversation_id}")
+        return User(**updated_user)
+    except Exception as e:
+        logger.error(f"Failed to update user: {e}")
+        raise HTTPException(status_code=400, detail='Failed to update user')
 
 @router.get('/users/', status_code=200, response_model=List[User])
-async def get_users():
+async def get_users(table: Any = Depends(get_users_table)):
     """
     Retrieve all users.
     """
-    return user_db.users
+    try:
+        users_data = get_all_users(table)
+        return [User(**user) for user in users_data]
+    except Exception as e:
+        logger.error(f"Failed to get users: {e}")
+        raise HTTPException(status_code=400, detail='Failed to get users')
