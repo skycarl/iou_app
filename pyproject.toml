@@ -9,7 +9,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.13"
-fastapi = "^0.111.0"
+fastapi = "^0.115.11"
 orjson = "^3.9.15"
 pydantic = "^2.7.3"
 python-dotenv = "^0.21.1"
