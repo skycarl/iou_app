@@ -38,10 +38,16 @@ async def get_version_endpoint():
 
 @router.get('/entries', status_code=200)
 async def get_entries(
+    user1: str = None,
+    user2: str = None,
     table: Any = Depends(get_table)
 ):
     """
-    Gets all the entries listed in the database
+    Gets entries listed in the database with optional user filtering.
+
+    - If no user parameters are provided, returns all entries
+    - If only user1 is provided, returns entries where user1 is either sender or recipient
+    - If both user1 and user2 are provided, returns only entries between these two users
 
     Returns:
         list: An array of Entry objects.
@@ -59,6 +65,18 @@ async def get_entries(
     entries = []
     try:
         for item in items:
+            # Apply user filtering
+            if user1 and user2:
+                # Filter for transactions between user1 and user2 (in either direction)
+                if not ((item['sender'] == user1 and item['recipient'] == user2) or
+                        (item['sender'] == user2 and item['recipient'] == user1)):
+                    continue
+            elif user1:
+                # Filter for transactions involving user1
+                if not (item['sender'] == user1 or item['recipient'] == user1):
+                    continue
+
+            # Add the entry if it passes filters
             entry = EntrySchema(
                 conversation_id=item['conversation_id'],
                 sender=item['sender'],
@@ -112,7 +130,7 @@ async def read_iou_status(
     user2: str,
     table: Any = Depends(get_table)
 ):
-    entries = await get_entries(table)
+    entries = await get_entries(user1, user2, table)
     total_user1_owes = sum(float(e.amount) for e in entries if e.sender == user1 and e.recipient == user2)
     total_user2_owes = sum(float(e.amount) for e in entries if e.sender == user2 and e.recipient == user1)
     difference = total_user1_owes - total_user2_owes
