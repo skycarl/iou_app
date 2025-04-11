@@ -175,6 +175,8 @@ async def split_amount(
     even_share = round(payload.amount / num_participants, 2)
 
     entries = []
+    participants_str = ', '.join(payload.participants)
+
     for participant in payload.participants:
         if participant != payload.payer:
             entry = EntrySchema(
@@ -182,7 +184,9 @@ async def split_amount(
                 sender=participant,
                 recipient=payload.payer,
                 amount=even_share,
-                description=f"Split: {payload.description}",
+                description=(f"Split: {payload.description} | "
+                             f"Total: ${payload.amount:.2f} | "
+                             f"Participants: {participants_str}"),
                 deleted=False,
             )
             entries.append(entry)
