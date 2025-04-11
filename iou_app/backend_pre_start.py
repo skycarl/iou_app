@@ -6,14 +6,13 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_fixed
 
-from iou_app.iou.google_sheets import get_service
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 max_tries = 60 * 5  # 5 minutes
 wait_seconds = 1
 
+# TODO is this even being used?
 
 @retry(
     stop=stop_after_attempt(max_tries),
@@ -23,8 +22,7 @@ wait_seconds = 1
 )
 def init() -> None:
     try:
-        service = get_service()
-        logger.info(f'Successfully connected to Google Sheets API: {service}')
+        logger.info('Successfully started')
     except Exception as e:
         logger.error(e)
         raise e
