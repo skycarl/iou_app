@@ -1,3 +1,4 @@
+import time
 import uuid
 from typing import Any
 from typing import Dict
@@ -9,10 +10,17 @@ from botocore.exceptions import ClientError
 from fastapi import Depends
 from loguru import logger
 
+# In-memory cache for users
+# Structure: {username: (user_data, expiry_timestamp)}
+USER_CACHE = {}
+DEFAULT_CACHE_TTL = 3600
+
+
 # Initialize DynamoDB resource
 def get_dynamodb_resource():
     """Returns a DynamoDB resource."""
     return boto3.resource('dynamodb', region_name='us-west-2')
+
 
 def get_table():
     """
@@ -21,12 +29,14 @@ def get_table():
     dynamodb = get_dynamodb_resource()
     return dynamodb.Table('iou_app')
 
+
 def get_users_table():
     """
     FastAPI dependency that provides a DynamoDB table for users.
     """
     dynamodb = get_dynamodb_resource()
     return dynamodb.Table('iou_users')
+
 
 def get_all_users(table: Any = Depends(get_users_table)) -> List[Dict[str, Any]]:
     """
@@ -45,27 +55,53 @@ def get_all_users(table: Any = Depends(get_users_table)) -> List[Dict[str, Any]]
         logger.error(f"Error retrieving users: {e}")
         raise Exception('Failed to retrieve users from DynamoDB') from e
 
-def get_user_by_username(username: str, table: Any = Depends(get_users_table)) -> Optional[Dict[str, Any]]:
+
+def get_user_by_username(
+    username: str, table: Any = Depends(get_users_table), ttl: int = DEFAULT_CACHE_TTL
+) -> Optional[Dict[str, Any]]:
     """
-    Gets a user by username from the DynamoDB table.
+    Gets a user by username from the DynamoDB table with caching.
 
     Args:
         username: The username to look up
         table: DynamoDB table instance (injected by FastAPI)
+        ttl: Time-to-live for cache entry in seconds (default: 1 hour)
 
     Returns:
         User data if found, None otherwise.
     """
+    current_time = time.time()
+
+    # Check if user is in cache and not expired
+    if username in USER_CACHE:
+        user_data, expiry = USER_CACHE[username]
+        if current_time < expiry:
+            logger.info(f"Cache hit for user: {username}")
+            return user_data
+        else:
+            logger.info(f"Cache expired for user: {username}")
+            del USER_CACHE[username]
+
+    # If not in cache or expired, query DynamoDB
     try:
-        response = table.get_item(
-            Key={'username': username}
-        )
-        return response.get('Item')
+        response = table.get_item(Key={'username': username})
+        user_data = response.get('Item')
+
+        # Store in cache if user found
+        if user_data:
+            expiry = current_time + ttl
+            USER_CACHE[username] = (user_data, expiry)
+            logger.debug(f"Cached user: {username}, expires in {ttl} seconds")
+
+        return user_data
     except ClientError as e:
         logger.error(f"Error retrieving user: {e}")
         raise Exception('Failed to retrieve user from DynamoDB') from e
 
-def create_user(user_data: Dict[str, Any], table: Any = Depends(get_users_table)) -> Dict[str, Any]:
+
+def create_user(
+    user_data: Dict[str, Any], table: Any = Depends(get_users_table)
+) -> Dict[str, Any]:
     """
     Creates a new user in the DynamoDB table.
 
@@ -78,12 +114,19 @@ def create_user(user_data: Dict[str, Any], table: Any = Depends(get_users_table)
     """
     try:
         table.put_item(Item=user_data)
+        # Update cache with new user
+        username = user_data.get('username')
+        if username:
+            USER_CACHE[username] = (user_data, time.time() + DEFAULT_CACHE_TTL)
         return user_data
     except ClientError as e:
         logger.error(f"Error creating user: {e}")
         raise Exception('Failed to create user in DynamoDB') from e
 
-def update_user(username: str, update_data: Dict[str, Any], table: Any = Depends(get_users_table)) -> Dict[str, Any]:
+
+def update_user(
+    username: str, update_data: Dict[str, Any], table: Any = Depends(get_users_table)
+) -> Dict[str, Any]:
     """
     Updates a user in the DynamoDB table.
 
@@ -96,7 +139,9 @@ def update_user(username: str, update_data: Dict[str, Any], table: Any = Depends
         The updated user data.
     """
     try:
-        update_expression = 'SET ' + ', '.join(f"#{k} = :{k}" for k in update_data.keys())
+        update_expression = 'SET ' + ', '.join(
+            f"#{k} = :{k}" for k in update_data.keys()
+        )
         expression_attribute_names = {f"#{k}": k for k in update_data.keys()}
         expression_attribute_values = {f":{k}": v for k, v in update_data.items()}
 
@@ -105,12 +150,41 @@ def update_user(username: str, update_data: Dict[str, Any], table: Any = Depends
             UpdateExpression=update_expression,
             ExpressionAttributeNames=expression_attribute_names,
             ExpressionAttributeValues=expression_attribute_values,
-            ReturnValues='ALL_NEW'
+            ReturnValues='ALL_NEW',
         )
-        return response.get('Attributes')
+
+        # Update cache with latest data
+        updated_user = response.get('Attributes')
+        if updated_user:
+            USER_CACHE[username] = (updated_user, time.time() + DEFAULT_CACHE_TTL)
+
+        return updated_user
     except ClientError as e:
         logger.error(f"Error updating user: {e}")
         raise Exception('Failed to update user in DynamoDB') from e
+
+
+# Function to invalidate cache for a specific user
+def invalidate_user_cache(username: str):
+    """
+    Removes a user from the cache.
+
+    Args:
+        username: The username to remove from cache
+    """
+    if username in USER_CACHE:
+        del USER_CACHE[username]
+        logger.info(f"Cache invalidated for user: {username}")
+
+
+# Function to clear the entire user cache
+def clear_user_cache():
+    """
+    Clears the entire user cache.
+    """
+    USER_CACHE.clear()
+    logger.info('User cache cleared')
+
 
 def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
     """
@@ -134,6 +208,7 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
     except ClientError as e:
         raise Exception('Failed to write item to DynamoDB') from e
 
+
 def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
     """
     Gets entries from the DynamoDB table.
@@ -151,10 +226,13 @@ def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
         logger.error(f"Error retrieving entries: {e}")
         raise Exception('Failed to retrieve entries from DynamoDB') from e
 
-def update_item(item_id: str,
-                update_expression: str,
-                expression_attribute_values: Dict[str, Any],
-                table: Any = Depends(get_table)):
+
+def update_item(
+    item_id: str,
+    update_expression: str,
+    expression_attribute_values: Dict[str, Any],
+    table: Any = Depends(get_table),
+):
     """
     Updates an item in the DynamoDB table.
 
@@ -172,12 +250,13 @@ def update_item(item_id: str,
             Key={'id': item_id},
             UpdateExpression=update_expression,
             ExpressionAttributeValues=expression_attribute_values,
-            ReturnValues='UPDATED_NEW'
+            ReturnValues='UPDATED_NEW',
         )
         return response
     except ClientError as e:
         logger.error(f"Error updating item: {e}")
         raise Exception('Failed to update item in DynamoDB') from e
+
 
 def delete_item(item_id: str, table: Any = Depends(get_table)):
     """
@@ -191,10 +270,7 @@ def delete_item(item_id: str, table: Any = Depends(get_table)):
         The response from DynamoDB.
     """
     try:
-        response = table.delete_item(
-            Key={'id': item_id},
-            ReturnValues='ALL_OLD'
-        )
+        response = table.delete_item(Key={'id': item_id}, ReturnValues='ALL_OLD')
         return response
     except ClientError as e:
         logger.error(f"Error deleting item: {e}")
