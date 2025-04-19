@@ -13,6 +13,9 @@ from loguru import logger
 # In-memory cache for users
 # Structure: {username: (user_data, expiry_timestamp)}
 USER_CACHE = {}
+# In-memory cache for entries
+# Structure: {'all_entries': (entries_list, expiry_timestamp)}
+ENTRIES_CACHE = {}
 DEFAULT_CACHE_TTL = 3600
 
 
@@ -91,7 +94,7 @@ def get_user_by_username(
         if user_data:
             expiry = current_time + ttl
             USER_CACHE[username] = (user_data, expiry)
-            logger.debug(f"Cached user: {username}, expires in {ttl} seconds")
+            logger.info(f"Cached user: {username}, expires in {ttl} seconds")
 
         return user_data
     except ClientError as e:
@@ -186,6 +189,25 @@ def clear_user_cache():
     logger.info('User cache cleared')
 
 
+# Function to invalidate the entries cache
+def invalidate_entries_cache():
+    """
+    Invalidates the entire entries cache.
+    """
+    if 'all_entries' in ENTRIES_CACHE:
+        del ENTRIES_CACHE['all_entries']
+        logger.info('Entries cache invalidated')
+
+
+# Function to clear the entire entries cache
+def clear_entries_cache():
+    """
+    Clears the entire entries cache.
+    """
+    ENTRIES_CACHE.clear()
+    logger.info('Entries cache cleared')
+
+
 def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
     """
     Writes an item to the DynamoDB table 'iou_app'.
@@ -204,6 +226,8 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
 
     try:
         response = table.put_item(Item=item)
+        # Invalidate entries cache since we added a new item
+        invalidate_entries_cache()
         return response
     except ClientError as e:
         raise Exception('Failed to write item to DynamoDB') from e
@@ -219,9 +243,29 @@ def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
     Returns:
         List of entries.
     """
+    current_time = time.time()
+
+    # Check if entries are in cache and not expired
+    if 'all_entries' in ENTRIES_CACHE:
+        entries_list, expiry = ENTRIES_CACHE['all_entries']
+        if current_time < expiry:
+            logger.info('Cache hit for entries')
+            return entries_list
+        else:
+            logger.info('Cache expired for entries')
+            invalidate_entries_cache()  # Use the invalidation function instead of direct deletion
+
     try:
         response = table.scan()
-        return response.get('Items', [])
+        entries_list = response.get('Items', [])
+
+        # Store in cache if entries found
+        if entries_list:
+            expiry = current_time + DEFAULT_CACHE_TTL
+            ENTRIES_CACHE['all_entries'] = (entries_list, expiry)
+            logger.info(f"Cached entries, expires in {DEFAULT_CACHE_TTL} seconds")
+
+        return entries_list
     except ClientError as e:
         logger.error(f"Error retrieving entries: {e}")
         raise Exception('Failed to retrieve entries from DynamoDB') from e
@@ -252,6 +296,8 @@ def update_item(
             ExpressionAttributeValues=expression_attribute_values,
             ReturnValues='UPDATED_NEW',
         )
+        # Invalidate entries cache since we updated an item
+        invalidate_entries_cache()
         return response
     except ClientError as e:
         logger.error(f"Error updating item: {e}")
@@ -271,6 +317,8 @@ def delete_item(item_id: str, table: Any = Depends(get_table)):
     """
     try:
         response = table.delete_item(Key={'id': item_id}, ReturnValues='ALL_OLD')
+        # Invalidate entries cache since we deleted an item
+        invalidate_entries_cache()
         return response
     except ClientError as e:
         logger.error(f"Error deleting item: {e}")
