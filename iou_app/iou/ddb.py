@@ -1,3 +1,5 @@
+import datetime
+import os
 import time
 import uuid
 from typing import Any
@@ -9,6 +11,10 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import Depends
 from loguru import logger
+
+AWS_DEFAULT_REGION = os.environ['AWS_DEFAULT_REGION']
+DDB_DATA_TABLE_NAME = os.environ.get('DDB_DATA_TABLE_NAME')
+DDB_USERS_TABLE_NAME = os.environ.get('DDB_USERS_TABLE_NAME')
 
 # In-memory cache for users
 # Structure: {username: (user_data, expiry_timestamp)}
@@ -22,7 +28,7 @@ DEFAULT_CACHE_TTL = 3600
 # Initialize DynamoDB resource
 def get_dynamodb_resource():
     """Returns a DynamoDB resource."""
-    return boto3.resource('dynamodb', region_name='us-west-2')
+    return boto3.resource('dynamodb', region_name=AWS_DEFAULT_REGION)
 
 
 def get_table():
@@ -30,7 +36,7 @@ def get_table():
     FastAPI dependency that provides a DynamoDB table.
     """
     dynamodb = get_dynamodb_resource()
-    return dynamodb.Table('iou_app')
+    return dynamodb.Table(DDB_DATA_TABLE_NAME)
 
 
 def get_users_table():
@@ -38,7 +44,7 @@ def get_users_table():
     FastAPI dependency that provides a DynamoDB table for users.
     """
     dynamodb = get_dynamodb_resource()
-    return dynamodb.Table('iou_users')
+    return dynamodb.Table(DDB_USERS_TABLE_NAME)
 
 
 def get_all_users(table: Any = Depends(get_users_table)) -> List[Dict[str, Any]]:
@@ -214,6 +220,7 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
 
     The item dictionary must include a 'datetime' key.
     A new UUID will be generated and added as the 'id' attribute.
+    If 'deleted' is not specified, it will default to 'False'.
 
     Raises:
         ValueError: If 'datetime' is missing in the item.
@@ -223,6 +230,10 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
         raise ValueError("The item must include a 'datetime' key.")
 
     item['id'] = str(uuid.uuid4())
+
+    # Ensure deleted field exists and defaults to 'False'
+    if 'deleted' not in item:
+        item['deleted'] = 'False'
 
     try:
         response = table.put_item(Item=item)
@@ -235,13 +246,13 @@ def write_item_to_dynamodb(item: dict, table: Any = Depends(get_table)):
 
 def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
     """
-    Gets entries from the DynamoDB table.
+    Gets entries from the DynamoDB table, excluding deleted entries.
 
     Args:
         table: DynamoDB table instance (injected by FastAPI)
 
     Returns:
-        List of entries.
+        List of non-deleted entries.
     """
     current_time = time.time()
 
@@ -253,22 +264,58 @@ def get_entries(table: Any = Depends(get_table)) -> List[Dict[str, Any]]:
             return entries_list
         else:
             logger.info('Cache expired for entries')
-            invalidate_entries_cache()  # Use the invalidation function instead of direct deletion
+            invalidate_entries_cache()
 
     try:
-        response = table.scan()
+        # Scan with filter to exclude deleted entries
+        response = table.scan(
+            FilterExpression='#deleted = :deleted_value',
+            ExpressionAttributeNames={'#deleted': 'deleted'},
+            ExpressionAttributeValues={':deleted_value': 'False'}
+        )
         entries_list = response.get('Items', [])
 
         # Store in cache if entries found
         if entries_list:
             expiry = current_time + DEFAULT_CACHE_TTL
             ENTRIES_CACHE['all_entries'] = (entries_list, expiry)
-            logger.info(f"Cached entries, expires in {DEFAULT_CACHE_TTL} seconds")
+            logger.info(f"Cached entries (non-deleted), expires in {DEFAULT_CACHE_TTL} seconds")
 
         return entries_list
     except ClientError as e:
         logger.error(f"Error retrieving entries: {e}")
         raise Exception('Failed to retrieve entries from DynamoDB') from e
+
+
+def get_entry_by_id(item_id: str, table: Any = Depends(get_table)) -> Optional[Dict[str, Any]]:
+    """
+    Gets a single entry by ID from the DynamoDB table, only if it's not deleted.
+
+    Args:
+        item_id: The ID of the item to retrieve
+        table: DynamoDB table instance (injected by FastAPI)
+
+    Returns:
+        Entry data if found and not deleted, None otherwise.
+    """
+    try:
+        response = table.scan(
+            FilterExpression='id = :item_id AND #deleted = :deleted_value',
+            ExpressionAttributeNames={'#deleted': 'deleted'},
+            ExpressionAttributeValues={
+                ':item_id': item_id,
+                ':deleted_value': 'False'
+            }
+        )
+
+        items = response.get('Items', [])
+        if not items:
+            return None
+
+        return items[0]
+    except ClientError as e:
+        logger.error(f"Error retrieving entry by ID: {e}")
+        raise Exception('Failed to retrieve entry from DynamoDB') from e
 
 
 def update_item(
@@ -290,8 +337,21 @@ def update_item(
         The response from DynamoDB.
     """
     try:
+        # First get the item to retrieve the datetime (sort key)
+        scan_response = table.scan(
+            FilterExpression='id = :item_id',
+            ExpressionAttributeValues={':item_id': item_id}
+        )
+
+        items = scan_response.get('Items', [])
+        if not items:
+            raise Exception(f'Item with id {item_id} not found')
+
+        item = items[0]
+
+        # Use the composite key: id (partition) + datetime (sort)
         response = table.update_item(
-            Key={'id': item_id},
+            Key={'id': item_id, 'datetime': item['datetime']},
             UpdateExpression=update_expression,
             ExpressionAttributeValues=expression_attribute_values,
             ReturnValues='UPDATED_NEW',
@@ -304,9 +364,58 @@ def update_item(
         raise Exception('Failed to update item in DynamoDB') from e
 
 
+def soft_delete_item(item_id: str, table: Any = Depends(get_table)):
+    """
+    Soft deletes an item in the DynamoDB table by setting deleted=True and deleted_at timestamp.
+
+    Args:
+        item_id: The ID of the item to soft delete.
+        table: DynamoDB table instance (injected by FastAPI)
+
+    Returns:
+        The response from DynamoDB.
+    """
+    try:
+        deleted_at = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # First get the item to retrieve the datetime (sort key)
+        scan_response = table.scan(
+            FilterExpression='id = :item_id AND #deleted = :deleted_value',
+            ExpressionAttributeNames={'#deleted': 'deleted'},
+            ExpressionAttributeValues={
+                ':item_id': item_id,
+                ':deleted_value': 'False'
+            }
+        )
+
+        items = scan_response.get('Items', [])
+        if not items:
+            raise Exception(f'Item with id {item_id} not found or already deleted')
+
+        item = items[0]
+
+        # Use the composite key: id (partition) + datetime (sort)
+        response = table.update_item(
+            Key={'id': item_id, 'datetime': item['datetime']},
+            UpdateExpression='SET deleted = :deleted_value, deleted_at = :deleted_at_value',
+            ExpressionAttributeValues={
+                ':deleted_value': 'True',
+                ':deleted_at_value': deleted_at
+            },
+            ReturnValues='UPDATED_NEW',
+        )
+
+        # Invalidate entries cache since we updated an item
+        invalidate_entries_cache()
+        return response
+    except ClientError as e:
+        logger.error(f"Error soft deleting item: {e}")
+        raise Exception('Failed to soft delete item in DynamoDB') from e
+
+
 def delete_item(item_id: str, table: Any = Depends(get_table)):
     """
-    Deletes an item from the DynamoDB table.
+    Hard deletes an item from the DynamoDB table.
 
     Args:
         item_id: The ID of the item to delete.
@@ -316,7 +425,23 @@ def delete_item(item_id: str, table: Any = Depends(get_table)):
         The response from DynamoDB.
     """
     try:
-        response = table.delete_item(Key={'id': item_id}, ReturnValues='ALL_OLD')
+        # First get the item to retrieve the datetime (sort key)
+        scan_response = table.scan(
+            FilterExpression='id = :item_id',
+            ExpressionAttributeValues={':item_id': item_id}
+        )
+
+        items = scan_response.get('Items', [])
+        if not items:
+            raise Exception(f'Item with id {item_id} not found')
+
+        item = items[0]
+
+        # Use composite key: id (partition) + datetime (sort)
+        response = table.delete_item(
+            Key={'id': item_id, 'datetime': item['datetime']},
+            ReturnValues='ALL_OLD'
+        )
         # Invalidate entries cache since we deleted an item
         invalidate_entries_cache()
         return response

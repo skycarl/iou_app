@@ -14,9 +14,11 @@ from iou_app.core.auth import verify_token
 from iou_app.iou.ddb import create_user
 from iou_app.iou.ddb import get_all_users
 from iou_app.iou.ddb import get_entries as ddb_get_entries
+from iou_app.iou.ddb import get_entry_by_id
 from iou_app.iou.ddb import get_table
 from iou_app.iou.ddb import get_user_by_username
 from iou_app.iou.ddb import get_users_table
+from iou_app.iou.ddb import soft_delete_item
 from iou_app.iou.ddb import update_user
 from iou_app.iou.ddb import write_item_to_dynamodb
 from iou_app.iou.schema import EntrySchema
@@ -271,3 +273,129 @@ async def get_users(table: Any = Depends(get_users_table)):
     except Exception as e:
         logger.error(f"Failed to get users: {e}")
         raise HTTPException(status_code=400, detail='Failed to get users')
+
+
+@router.delete('/entries/{entry_id}', status_code=200)
+async def delete_entry(
+    entry_id: str,
+    table: Any = Depends(get_table)
+):
+    """
+    Soft delete an entry by setting deleted=True.
+    """
+    # Check if entry exists and is not already deleted
+    entry = get_entry_by_id(entry_id, table)
+    if not entry:
+        raise HTTPException(status_code=404, detail='Entry not found')
+
+    try:
+        soft_delete_item(entry_id, table)
+        logger.success(f"Soft deleted entry: {entry_id}")
+        return {'message': 'Entry deleted successfully', 'id': entry_id}
+    except Exception as e:
+        logger.error(f"Failed to delete entry {entry_id}: {e}")
+        raise HTTPException(status_code=400, detail='Failed to delete entry')
+
+
+@router.get('/entries/{entry_id}', status_code=200)
+async def get_entry(
+    entry_id: str,
+    table: Any = Depends(get_table)
+):
+    """
+    Retrieve a specific entry by ID.
+    """
+    entry = get_entry_by_id(entry_id, table)
+    if not entry:
+        raise HTTPException(status_code=404, detail='Entry not found')
+
+    try:
+        entry_schema = EntrySchema(
+            conversation_id=entry['conversation_id'],
+            sender=entry['sender'],
+            recipient=entry['recipient'],
+            amount=float(entry['amount']),
+            description=entry['description'],
+            timestamp=entry['datetime']
+        )
+        return entry_schema
+    except (ValidationError, KeyError) as e:
+        logger.error(f'Invalid data in DynamoDB for entry {entry_id}: {e}')
+        raise HTTPException(status_code=400, detail='Invalid data in DynamoDB')
+
+@router.post('/settle', status_code=200)
+async def settle_transactions(
+    user1: str,
+    user2: str,
+    table: Any = Depends(get_table)
+):
+    """
+    Settle all transactions between two users by soft deleting all entries.
+
+    Args:
+        user1: First user
+        user2: Second user
+        table: DynamoDB table instance
+
+    Returns:
+        Settlement summary including final IOU status and number of transactions settled
+    """
+    # Get all entries between the two users first to check if there's anything to settle
+    try:
+        items = ddb_get_entries(table)
+    except Exception as e:
+        logger.error(f'Failed to get entries with error: {e}')
+        raise HTTPException(status_code=400, detail='Failed to get entries')
+
+    if not items:
+        logger.info('No transactions found')
+        return {
+            'message': 'No transactions found',
+            'final_status': {
+                'owing_user': None,
+                'owed_user': None,
+                'amount': 0.0
+            },
+            'transactions_settled': 0
+        }
+
+    # Filter items for transactions between user1 and user2 (same logic as get_entries)
+    filtered_items = []
+    for item in items:
+        # Apply user filtering - transactions between user1 and user2 (in either direction)
+        if (item['sender'] == user1 and item['recipient'] == user2) or \
+           (item['sender'] == user2 and item['recipient'] == user1):
+            filtered_items.append(item)
+
+    # If no filtered entries found, return early
+    if not filtered_items:
+        logger.info(f'No transactions found between {user1} and {user2}')
+        return {
+            'message': f'No transactions found between {user1} and {user2}',
+            'final_status': {
+                'owing_user': None,
+                'owed_user': None,
+                'amount': 0.0
+            },
+            'transactions_settled': 0
+        }
+
+    iou_status = await read_iou_status(user1, user2, table)
+    transactions_settled = 0
+
+    # Soft delete each filtered entry
+    for item in filtered_items:
+        try:
+            soft_delete_item(item['id'], table)
+            transactions_settled += 1
+        except Exception as e:
+            logger.error(f"Failed to settle transaction: {e}")
+            continue
+
+    logger.success(f"Settled {transactions_settled} transactions between {user1} and {user2}")
+
+    return {
+        'message': f'Successfully settled all transactions between {user1} and {user2}',
+        'final_status': iou_status,
+        'transactions_settled': transactions_settled
+    }
