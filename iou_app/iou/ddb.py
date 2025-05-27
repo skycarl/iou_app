@@ -36,6 +36,7 @@ def get_table():
     FastAPI dependency that provides a DynamoDB table.
     """
     dynamodb = get_dynamodb_resource()
+    logger.info('Using DynamoDB table: %s', DDB_DATA_TABLE_NAME)
     return dynamodb.Table(DDB_DATA_TABLE_NAME)
 
 
@@ -44,6 +45,7 @@ def get_users_table():
     FastAPI dependency that provides a DynamoDB table for users.
     """
     dynamodb = get_dynamodb_resource()
+    logger.info('Using DynamoDB users table: %s', DDB_USERS_TABLE_NAME)
     return dynamodb.Table(DDB_USERS_TABLE_NAME)
 
 
