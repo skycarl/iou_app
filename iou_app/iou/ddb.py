@@ -13,8 +13,8 @@ from fastapi import Depends
 from loguru import logger
 
 AWS_DEFAULT_REGION = os.environ['AWS_DEFAULT_REGION']
-DDB_DATA_TABLE_NAME = os.environ.get('DDB_DATA_TABLE_NAME')
-DDB_USERS_TABLE_NAME = os.environ.get('DDB_USERS_TABLE_NAME')
+DDB_DATA_TABLE_NAME = os.environ['DDB_DATA_TABLE_NAME']
+DDB_USERS_TABLE_NAME = os.environ['DDB_USERS_TABLE_NAME']
 
 # In-memory cache for users
 # Structure: {username: (user_data, expiry_timestamp)}
@@ -36,7 +36,7 @@ def get_table():
     FastAPI dependency that provides a DynamoDB table.
     """
     dynamodb = get_dynamodb_resource()
-    logger.info('Using DynamoDB table: %s', DDB_DATA_TABLE_NAME)
+    logger.info(f'Using DynamoDB table: {DDB_DATA_TABLE_NAME}')
     return dynamodb.Table(DDB_DATA_TABLE_NAME)
 
 
@@ -45,7 +45,7 @@ def get_users_table():
     FastAPI dependency that provides a DynamoDB table for users.
     """
     dynamodb = get_dynamodb_resource()
-    logger.info('Using DynamoDB users table: %s', DDB_USERS_TABLE_NAME)
+    logger.info(f'Using DynamoDB users table: {DDB_USERS_TABLE_NAME}')
     return dynamodb.Table(DDB_USERS_TABLE_NAME)
 
 
