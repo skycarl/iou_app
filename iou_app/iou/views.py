@@ -58,11 +58,11 @@ async def get_entries(
         items = ddb_get_entries(table)
     except Exception as e:
         logger.error(f'Failed to get entries with error: {e}')
-        raise HTTPException(status_code=400, detail='Failed to get entries')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
     if not items:
         logger.info('No data found')
-        raise HTTPException(status_code=404, detail='No data found.')
+        return []
 
     entries = []
     try:
@@ -90,7 +90,7 @@ async def get_entries(
             entries.append(entry)
     except (ValidationError, KeyError) as e:
         logger.error(f'Invalid data in DynamoDB: {e}')
-        raise HTTPException(status_code=400, detail='Invalid data in DynamoDB')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
     return entries
 
@@ -121,7 +121,7 @@ async def add_entry(
         result = write_item_to_dynamodb(item, table)
     except Exception as e:
         logger.error(f'Failed to add entry: {payload} with error: {e}')
-        raise HTTPException(status_code=400, detail='Failed to add entry')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
     logger.success(f'Added entry: {result}')
     return payload
@@ -214,7 +214,7 @@ async def add_user(
     # Check if user exists
     existing_user = get_user_by_username(new_user.username, table)
     if existing_user:
-        raise HTTPException(status_code=400, detail='User already exists')
+        raise HTTPException(status_code=409, detail='User already exists')
 
     # Create user in DynamoDB
     user_data = new_user.model_dump()
@@ -224,7 +224,7 @@ async def add_user(
         return User(**created_user)
     except Exception as e:
         logger.error(f"Failed to create user: {e}")
-        raise HTTPException(status_code=400, detail='Failed to create user')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 @router.get('/users/{username}', status_code=200)
 async def get_user(
@@ -260,7 +260,7 @@ async def update_user_endpoint(
         return User(**updated_user)
     except Exception as e:
         logger.error(f"Failed to update user: {e}")
-        raise HTTPException(status_code=400, detail='Failed to update user')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 @router.get('/users/', status_code=200, response_model=List[User])
 async def get_users(table: Any = Depends(get_users_table)):
@@ -272,7 +272,7 @@ async def get_users(table: Any = Depends(get_users_table)):
         return [User(**user) for user in users_data]
     except Exception as e:
         logger.error(f"Failed to get users: {e}")
-        raise HTTPException(status_code=400, detail='Failed to get users')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 
 @router.delete('/entries/{entry_id}', status_code=200)
@@ -294,7 +294,7 @@ async def delete_entry(
         return {'message': 'Entry deleted successfully', 'id': entry_id}
     except Exception as e:
         logger.error(f"Failed to delete entry {entry_id}: {e}")
-        raise HTTPException(status_code=400, detail='Failed to delete entry')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 
 @router.get('/entries/{entry_id}', status_code=200)
@@ -321,7 +321,7 @@ async def get_entry(
         return entry_schema
     except (ValidationError, KeyError) as e:
         logger.error(f'Invalid data in DynamoDB for entry {entry_id}: {e}')
-        raise HTTPException(status_code=400, detail='Invalid data in DynamoDB')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
 @router.post('/settle', status_code=200)
 async def settle_transactions(
@@ -345,7 +345,7 @@ async def settle_transactions(
         items = ddb_get_entries(table)
     except Exception as e:
         logger.error(f'Failed to get entries with error: {e}')
-        raise HTTPException(status_code=400, detail='Failed to get entries')
+        raise HTTPException(status_code=500, detail='Internal server error')
 
     if not items:
         logger.info('No transactions found')
