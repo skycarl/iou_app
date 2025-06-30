@@ -1,18 +1,8 @@
-import os
 from unittest.mock import Mock
 
 import pytest
 
 from iou_app.iou import ddb
-
-
-@pytest.fixture(autouse=True)
-def setup_environment_variables():
-    """Set up environment variables for testing."""
-    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-    os.environ['DDB_DATA_TABLE_NAME'] = 'test-data-table'
-    os.environ['DDB_USERS_TABLE_NAME'] = 'test-users-table'
-    os.environ['ENV'] = 'test'
 
 
 @pytest.fixture(autouse=True)
