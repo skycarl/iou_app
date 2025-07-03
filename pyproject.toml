@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "iou_app"
-version = "0.12.0"
+version = "0.13.0"
 description = "IOU App"
 authors = ["Skyler Carlson"]
 packages = [
-    { include = "iou_app" }
+    { include = "app" },
+    { include = "bot" }
 ]
 
 [tool.poetry.dependencies]
@@ -24,6 +25,7 @@ pytest-env = "^1.1.5"
 pandas = "^2.2.3"
 toml = "^0.10.2"
 boto3 = "^1.37.32"
+python-telegram-bot = "^21.11.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-asyncio = "^1.0.0"

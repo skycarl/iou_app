@@ -1,17 +1,17 @@
 import pytest
 from pydantic import ValidationError
 
-from iou_app.iou.schema import AmountException
-from iou_app.iou.schema import EntrySchema
-from iou_app.iou.schema import IOUMessage
-from iou_app.iou.schema import IOUQuery
-from iou_app.iou.schema import IOUStatus
-from iou_app.iou.schema import SplitResponse
-from iou_app.iou.schema import SplitSchema
-from iou_app.iou.schema import TransactionEntry
-from iou_app.iou.schema import User
-from iou_app.iou.schema import UserUpdate
-from iou_app.iou.schema import validate_amount_str
+from app.iou.schema import AmountException
+from app.iou.schema import EntrySchema
+from app.iou.schema import IOUMessage
+from app.iou.schema import IOUQuery
+from app.iou.schema import IOUStatus
+from app.iou.schema import SplitResponse
+from app.iou.schema import SplitSchema
+from app.iou.schema import TransactionEntry
+from app.iou.schema import User
+from app.iou.schema import UserUpdate
+from app.iou.schema import validate_amount_str
 
 @ pytest.mark.parametrize(
     'input_str, expected',

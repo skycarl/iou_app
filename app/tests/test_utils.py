@@ -1,7 +1,7 @@
 import pytest
 
-from iou_app.iou.schema import EntrySchema
-from iou_app.iou.utils import compute_iou_status
+from app.iou.schema import EntrySchema
+from app.iou.utils import compute_iou_status
 
 
 class TestComputeIOUStatus:

@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from iou_app.iou import ddb
+from app.iou import ddb
 
 
 @pytest.fixture(autouse=True)

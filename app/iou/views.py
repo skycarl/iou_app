@@ -10,22 +10,22 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from pydantic import ValidationError
 
-from iou_app.core.auth import verify_token
-from iou_app.iou.ddb import create_user
-from iou_app.iou.ddb import get_all_users
-from iou_app.iou.ddb import get_entries as ddb_get_entries
-from iou_app.iou.ddb import get_entry_by_id
-from iou_app.iou.ddb import get_table
-from iou_app.iou.ddb import get_user_by_username
-from iou_app.iou.ddb import get_users_table
-from iou_app.iou.ddb import soft_delete_item
-from iou_app.iou.ddb import update_user
-from iou_app.iou.ddb import write_item_to_dynamodb
-from iou_app.iou.schema import EntrySchema
-from iou_app.iou.schema import IOUStatus
-from iou_app.iou.schema import SplitSchema
-from iou_app.iou.schema import User
-from iou_app.iou.schema import UserUpdate
+from app.core.auth import verify_token
+from app.iou.ddb import create_user
+from app.iou.ddb import get_all_users
+from app.iou.ddb import get_entries as ddb_get_entries
+from app.iou.ddb import get_entry_by_id
+from app.iou.ddb import get_table
+from app.iou.ddb import get_user_by_username
+from app.iou.ddb import get_users_table
+from app.iou.ddb import soft_delete_item
+from app.iou.ddb import update_user
+from app.iou.ddb import write_item_to_dynamodb
+from app.iou.schema import EntrySchema
+from app.iou.schema import IOUStatus
+from app.iou.schema import SplitSchema
+from app.iou.schema import User
+from app.iou.schema import UserUpdate
 
 router = APIRouter(dependencies=[Depends(verify_token)])
 

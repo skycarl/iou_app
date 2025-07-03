@@ -5,11 +5,11 @@ from unittest.mock import patch
 import pytest
 from botocore.exceptions import ClientError
 
-from iou_app.iou import ddb
+from app.iou import ddb
 
 
 class TestDynamoDBResourceAndTables:
-    @patch('iou_app.iou.ddb.boto3.resource')
+    @patch('app.iou.ddb.boto3.resource')
     def test_get_dynamodb_resource(self, mock_boto3_resource):
         mock_resource = Mock()
         mock_boto3_resource.return_value = mock_resource
@@ -19,7 +19,7 @@ class TestDynamoDBResourceAndTables:
         mock_boto3_resource.assert_called_once_with('dynamodb', region_name=ddb.AWS_DEFAULT_REGION)
         assert result == mock_resource
 
-    @patch('iou_app.iou.ddb.get_dynamodb_resource')
+    @patch('app.iou.ddb.get_dynamodb_resource')
     def test_get_table(self, mock_get_dynamodb_resource):
         mock_dynamodb = Mock()
         mock_table = Mock()
@@ -31,7 +31,7 @@ class TestDynamoDBResourceAndTables:
         mock_dynamodb.Table.assert_called_once_with(ddb.DDB_DATA_TABLE_NAME)
         assert result == mock_table
 
-    @patch('iou_app.iou.ddb.get_dynamodb_resource')
+    @patch('app.iou.ddb.get_dynamodb_resource')
     def test_get_users_table(self, mock_get_dynamodb_resource):
         mock_dynamodb = Mock()
         mock_table = Mock()
@@ -230,8 +230,8 @@ class TestEntryOperations:
 
         mock_uuid = Mock()
         mock_uuid.__str__ = Mock(return_value='test-uuid')
-        with patch('iou_app.iou.ddb.uuid.uuid4', return_value=mock_uuid):
-            with patch('iou_app.iou.ddb.datetime') as mock_datetime:
+        with patch('app.iou.ddb.uuid.uuid4', return_value=mock_uuid):
+            with patch('app.iou.ddb.datetime') as mock_datetime:
                 mock_datetime.datetime.now.return_value.strftime.return_value = '2023-01-01 10:00:00'
 
                 result = ddb.write_item_to_dynamodb(item, mock_table)
@@ -378,7 +378,7 @@ class TestEntryOperations:
         mock_table.scan.return_value = scan_response
         mock_table.update_item.return_value = updated_item
 
-        with patch('iou_app.iou.ddb.datetime') as mock_datetime:
+        with patch('app.iou.ddb.datetime') as mock_datetime:
             mock_datetime.datetime.now.return_value.strftime.return_value = '2023-01-01 10:00:00'
 
             result = ddb.soft_delete_item('test-id', mock_table)

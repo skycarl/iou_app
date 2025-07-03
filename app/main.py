@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from fastapi import FastAPI
 
-from iou_app.core.logger import init_logging
-from iou_app.core.main_router import router as main_router
-from iou_app.iou.views import router as iou_router
+from app.core.logger import init_logging
+from app.core.main_router import router as main_router
+from app.iou.views import router as iou_router
 
 root_router = APIRouter()
 

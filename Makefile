@@ -19,7 +19,7 @@ lint-fix:
 	poetry run ruff check --fix
 
 run:
-	poetry run python -m uvicorn iou_app.main:app --reload
+	poetry run python -m uvicorn app.main:app --reload
 
 pre-commit:
 	poetry run pre-commit run --all-files

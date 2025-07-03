@@ -6,12 +6,12 @@ import pytest
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
-from iou_app.iou.schema import EntrySchema
-from iou_app.iou.schema import IOUStatus
-from iou_app.iou.schema import SplitSchema
-from iou_app.iou.schema import User
-from iou_app.iou.schema import UserUpdate
-from iou_app.iou.views import get_version
+from app.iou.schema import EntrySchema
+from app.iou.schema import IOUStatus
+from app.iou.schema import SplitSchema
+from app.iou.schema import User
+from app.iou.schema import UserUpdate
+from app.iou.views import get_version
 
 
 # Mock data
@@ -51,26 +51,26 @@ class TestGetVersion:
 version = "1.2.3"
 '''))
     def test_get_version_function(self):
-        with patch('iou_app.iou.views.toml.load') as mock_load:
+        with patch('app.iou.views.toml.load') as mock_load:
             mock_load.return_value = {'tool': {'poetry': {'version': '1.2.3'}}}
             version = get_version()
             assert version == '1.2.3'
 
-    @patch('iou_app.iou.views.get_version')
+    @patch('app.iou.views.get_version')
     @pytest.mark.asyncio
     async def test_get_version_endpoint(self, mock_get_version):
         mock_get_version.return_value = '1.2.3'
-        from iou_app.iou.views import get_version_endpoint
+        from app.iou.views import get_version_endpoint
 
         result = await get_version_endpoint()
         assert result == {'version': '1.2.3'}
 
 
 class TestGetEntries:
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_get_entries_no_filters(self, mock_ddb_get_entries):
-        from iou_app.iou.views import get_entries
+        from app.iou.views import get_entries
 
         mock_ddb_get_entries.return_value = MOCK_ENTRIES
         mock_table = Mock()
@@ -82,10 +82,10 @@ class TestGetEntries:
         assert result[0].recipient == 'bob'
         assert result[0].amount == 10.50
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_get_entries_with_user1_filter(self, mock_ddb_get_entries):
-        from iou_app.iou.views import get_entries
+        from app.iou.views import get_entries
 
         mock_ddb_get_entries.return_value = MOCK_ENTRIES
         mock_table = Mock()
@@ -94,10 +94,10 @@ class TestGetEntries:
 
         assert len(result) == 2  # Alice is involved in both transactions
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_get_entries_with_both_users_filter(self, mock_ddb_get_entries):
-        from iou_app.iou.views import get_entries
+        from app.iou.views import get_entries
 
         mock_ddb_get_entries.return_value = MOCK_ENTRIES
         mock_table = Mock()
@@ -106,10 +106,10 @@ class TestGetEntries:
 
         assert len(result) == 2  # Both entries are between alice and bob
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_get_entries_no_data(self, mock_ddb_get_entries):
-        from iou_app.iou.views import get_entries
+        from app.iou.views import get_entries
 
         mock_ddb_get_entries.return_value = []
         mock_table = Mock()
@@ -118,10 +118,10 @@ class TestGetEntries:
 
         assert result == []
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_get_entries_database_error(self, mock_ddb_get_entries):
-        from iou_app.iou.views import get_entries
+        from app.iou.views import get_entries
 
         mock_ddb_get_entries.side_effect = Exception('Database error')
         mock_table = Mock()
@@ -134,10 +134,10 @@ class TestGetEntries:
 
 
 class TestAddEntry:
-    @patch('iou_app.iou.views.write_item_to_dynamodb')
+    @patch('app.iou.views.write_item_to_dynamodb')
     @pytest.mark.asyncio
     async def test_add_entry_success(self, mock_write_item):
-        from iou_app.iou.views import add_entry
+        from app.iou.views import add_entry
 
         mock_write_item.return_value = {'id': 'new_entry_id'}
         mock_table = Mock()
@@ -159,10 +159,10 @@ class TestAddEntry:
 
         mock_write_item.assert_called_once()
 
-    @patch('iou_app.iou.views.write_item_to_dynamodb')
+    @patch('app.iou.views.write_item_to_dynamodb')
     @pytest.mark.asyncio
     async def test_add_entry_database_error(self, mock_write_item):
-        from iou_app.iou.views import add_entry
+        from app.iou.views import add_entry
 
         mock_write_item.side_effect = Exception('Database error')
         mock_table = Mock()
@@ -181,10 +181,10 @@ class TestAddEntry:
 
 
 class TestIOUStatus:
-    @patch('iou_app.iou.views.get_entries')
+    @patch('app.iou.views.get_entries')
     @pytest.mark.asyncio
     async def test_iou_status_user1_owes_more(self, mock_get_entries):
-        from iou_app.iou.views import read_iou_status
+        from app.iou.views import read_iou_status
 
         # Alice owes Bob more
         entries = [
@@ -200,10 +200,10 @@ class TestIOUStatus:
         assert result.owed_user == 'bob'
         assert result.amount == 15.0
 
-    @patch('iou_app.iou.views.get_entries')
+    @patch('app.iou.views.get_entries')
     @pytest.mark.asyncio
     async def test_iou_status_user2_owes_more(self, mock_get_entries):
-        from iou_app.iou.views import read_iou_status
+        from app.iou.views import read_iou_status
 
         # Bob owes Alice more
         entries = [
@@ -219,10 +219,10 @@ class TestIOUStatus:
         assert result.owed_user == 'alice'
         assert result.amount == 15.0
 
-    @patch('iou_app.iou.views.get_entries')
+    @patch('app.iou.views.get_entries')
     @pytest.mark.asyncio
     async def test_iou_status_even(self, mock_get_entries):
-        from iou_app.iou.views import read_iou_status
+        from app.iou.views import read_iou_status
 
         # Even amounts
         entries = [
@@ -240,10 +240,10 @@ class TestIOUStatus:
 
 
 class TestSplitAmount:
-    @patch('iou_app.iou.views.add_entry')
+    @patch('app.iou.views.add_entry')
     @pytest.mark.asyncio
     async def test_split_amount_success(self, mock_add_entry):
-        from iou_app.iou.views import split_amount
+        from app.iou.views import split_amount
 
         mock_add_entry.return_value = None
         mock_table = Mock()
@@ -268,7 +268,7 @@ class TestSplitAmount:
 
     @pytest.mark.asyncio
     async def test_split_amount_insufficient_participants(self):
-        from iou_app.iou.views import split_amount
+        from app.iou.views import split_amount
 
         mock_table = Mock()
 
@@ -287,11 +287,11 @@ class TestSplitAmount:
 
 
 class TestUserEndpoints:
-    @patch('iou_app.iou.views.get_user_by_username')
-    @patch('iou_app.iou.views.create_user')
+    @patch('app.iou.views.get_user_by_username')
+    @patch('app.iou.views.create_user')
     @pytest.mark.asyncio
     async def test_add_user_success(self, mock_create_user, mock_get_user):
-        from iou_app.iou.views import add_user
+        from app.iou.views import add_user
 
         mock_get_user.return_value = None  # User doesn't exist
         mock_create_user.return_value = MOCK_USER
@@ -304,10 +304,10 @@ class TestUserEndpoints:
         assert result.username == 'alice'
         assert result.conversation_id == '12345'
 
-    @patch('iou_app.iou.views.get_user_by_username')
+    @patch('app.iou.views.get_user_by_username')
     @pytest.mark.asyncio
     async def test_add_user_already_exists(self, mock_get_user):
-        from iou_app.iou.views import add_user
+        from app.iou.views import add_user
 
         mock_get_user.return_value = MOCK_USER  # User exists
         mock_table = Mock()
@@ -320,10 +320,10 @@ class TestUserEndpoints:
         assert exc_info.value.status_code == 409
         assert exc_info.value.detail == 'User already exists'
 
-    @patch('iou_app.iou.views.get_user_by_username')
+    @patch('app.iou.views.get_user_by_username')
     @pytest.mark.asyncio
     async def test_get_user_success(self, mock_get_user):
-        from iou_app.iou.views import get_user
+        from app.iou.views import get_user
 
         mock_get_user.return_value = MOCK_USER
         mock_table = Mock()
@@ -333,10 +333,10 @@ class TestUserEndpoints:
         assert result['username'] == 'alice'
         assert result['conversation_id'] == '12345'
 
-    @patch('iou_app.iou.views.get_user_by_username')
+    @patch('app.iou.views.get_user_by_username')
     @pytest.mark.asyncio
     async def test_get_user_not_found(self, mock_get_user):
-        from iou_app.iou.views import get_user
+        from app.iou.views import get_user
 
         mock_get_user.return_value = None
         mock_table = Mock()
@@ -347,11 +347,11 @@ class TestUserEndpoints:
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == 'User not found'
 
-    @patch('iou_app.iou.views.get_user_by_username')
-    @patch('iou_app.iou.views.update_user')
+    @patch('app.iou.views.get_user_by_username')
+    @patch('app.iou.views.update_user')
     @pytest.mark.asyncio
     async def test_update_user_success(self, mock_update_user, mock_get_user):
-        from iou_app.iou.views import update_user_endpoint
+        from app.iou.views import update_user_endpoint
 
         mock_get_user.return_value = MOCK_USER
         updated_user = MOCK_USER.copy()
@@ -366,10 +366,10 @@ class TestUserEndpoints:
         assert result.username == 'alice'
         assert result.conversation_id == '54321'
 
-    @patch('iou_app.iou.views.get_all_users')
+    @patch('app.iou.views.get_all_users')
     @pytest.mark.asyncio
     async def test_get_users_success(self, mock_get_all_users):
-        from iou_app.iou.views import get_users
+        from app.iou.views import get_users
 
         mock_get_all_users.return_value = [MOCK_USER]
         mock_table = Mock()
@@ -381,11 +381,11 @@ class TestUserEndpoints:
 
 
 class TestEntryEndpoints:
-    @patch('iou_app.iou.views.get_entry_by_id')
-    @patch('iou_app.iou.views.soft_delete_item')
+    @patch('app.iou.views.get_entry_by_id')
+    @patch('app.iou.views.soft_delete_item')
     @pytest.mark.asyncio
     async def test_delete_entry_success(self, mock_soft_delete, mock_get_entry):
-        from iou_app.iou.views import delete_entry
+        from app.iou.views import delete_entry
 
         mock_get_entry.return_value = MOCK_ENTRIES[0]
         mock_soft_delete.return_value = None
@@ -396,10 +396,10 @@ class TestEntryEndpoints:
         assert result['message'] == 'Entry deleted successfully'
         assert result['id'] == 'entry1'
 
-    @patch('iou_app.iou.views.get_entry_by_id')
+    @patch('app.iou.views.get_entry_by_id')
     @pytest.mark.asyncio
     async def test_delete_entry_not_found(self, mock_get_entry):
-        from iou_app.iou.views import delete_entry
+        from app.iou.views import delete_entry
 
         mock_get_entry.return_value = None
         mock_table = Mock()
@@ -410,10 +410,10 @@ class TestEntryEndpoints:
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == 'Entry not found'
 
-    @patch('iou_app.iou.views.get_entry_by_id')
+    @patch('app.iou.views.get_entry_by_id')
     @pytest.mark.asyncio
     async def test_get_entry_success(self, mock_get_entry):
-        from iou_app.iou.views import get_entry
+        from app.iou.views import get_entry
 
         mock_get_entry.return_value = MOCK_ENTRIES[0]
         mock_table = Mock()
@@ -425,10 +425,10 @@ class TestEntryEndpoints:
         assert result.recipient == 'bob'
         assert result.amount == 10.50
 
-    @patch('iou_app.iou.views.get_entry_by_id')
+    @patch('app.iou.views.get_entry_by_id')
     @pytest.mark.asyncio
     async def test_get_entry_not_found(self, mock_get_entry):
-        from iou_app.iou.views import get_entry
+        from app.iou.views import get_entry
 
         mock_get_entry.return_value = None
         mock_table = Mock()
@@ -441,12 +441,12 @@ class TestEntryEndpoints:
 
 
 class TestSettleTransactions:
-    @patch('iou_app.iou.views.ddb_get_entries')
-    @patch('iou_app.iou.views.read_iou_status')
-    @patch('iou_app.iou.views.soft_delete_item')
+    @patch('app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.read_iou_status')
+    @patch('app.iou.views.soft_delete_item')
     @pytest.mark.asyncio
     async def test_settle_transactions_success(self, mock_soft_delete, mock_read_iou_status, mock_ddb_get_entries):
-        from iou_app.iou.views import settle_transactions
+        from app.iou.views import settle_transactions
 
         mock_ddb_get_entries.return_value = MOCK_ENTRIES
         mock_read_iou_status.return_value = IOUStatus(owing_user='alice', owed_user='bob', amount=5.25)
@@ -459,10 +459,10 @@ class TestSettleTransactions:
         assert result['transactions_settled'] == 2
         assert result['final_status'].owing_user == 'alice'
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_settle_transactions_no_data(self, mock_ddb_get_entries):
-        from iou_app.iou.views import settle_transactions
+        from app.iou.views import settle_transactions
 
         mock_ddb_get_entries.return_value = []
         mock_table = Mock()
@@ -472,10 +472,10 @@ class TestSettleTransactions:
         assert result['message'] == 'No transactions found'
         assert result['transactions_settled'] == 0
 
-    @patch('iou_app.iou.views.ddb_get_entries')
+    @patch('app.iou.views.ddb_get_entries')
     @pytest.mark.asyncio
     async def test_settle_transactions_no_matching_users(self, mock_ddb_get_entries):
-        from iou_app.iou.views import settle_transactions
+        from app.iou.views import settle_transactions
 
         mock_ddb_get_entries.return_value = MOCK_ENTRIES
         mock_table = Mock()
@@ -493,10 +493,10 @@ class TestSettleTransactions:
     ('charlie', None, 0), # Charlie not involved
     ('alice', 'charlie', 0), # No transactions between alice and charlie
 ])
-@patch('iou_app.iou.views.ddb_get_entries')
+@patch('app.iou.views.ddb_get_entries')
 @pytest.mark.asyncio
 async def test_get_entries_filtering_parameterized(mock_ddb_get_entries, user1, user2, expected_entries):
-    from iou_app.iou.views import get_entries
+    from app.iou.views import get_entries
 
     mock_ddb_get_entries.return_value = MOCK_ENTRIES
     mock_table = Mock()
