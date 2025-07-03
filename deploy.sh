@@ -18,11 +18,6 @@ if ! docker pull ghcr.io/skycarl/iou_app:latest; then
   exit 1
 fi
 
-if ! docker pull ghcr.io/skycarl/iou_bot:latest; then
-  echo "Failed to pull iou_bot image"
-  exit 1
-fi
-
 echo "Restarting Docker containers"
 if ! docker compose -f docker-compose.yml down; then
   echo "Failed to stop Docker containers"
