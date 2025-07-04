@@ -22,6 +22,7 @@ services:
 
   bot:
     container_name: iou_bot
+    image: ghcr.io/skycarl/iou_app:latest
     build:
       context: .
       dockerfile: .docker/Dockerfile
