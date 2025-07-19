@@ -8,11 +8,14 @@ max_wait_time=120
 health_check_retries=12
 health_check_interval=10
 
-# Setup logging with timestamps
-exec > >(while read line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done | tee -i $log_file)
-exec 2>&1
+# Setup simple logging
+log() {
+    local message="$(date '+%Y-%m-%d %H:%M:%S') $1"
+    echo "$message"
+    echo "$message" >> $log_file
+}
 
-echo "Starting deployment process..."
+log "Starting deployment process..."
 
 # Function to check disk space (Pi has limited space)
 check_disk_space() {
@@ -125,3 +128,6 @@ echo "Health check: http://localhost:8000/healthcheck"
 # Final verification
 echo "Final status check:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Ensure script exits cleanly
+exit 0

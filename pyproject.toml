@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "iou_app"
-version = "0.13.4"
+version = "0.13.5"
 description = "IOU App"
 authors = ["Skyler Carlson"]
 packages = [
