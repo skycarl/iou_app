@@ -1,0 +1,52 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# IOU App - Cursor Rules
+
+## Project Overview
+This is a FastAPI-based IOU (I Owe You) application built with Python, using Poetry for dependency management.
+
+## Development Workflow - IMPORTANT
+**Always use the Makefile commands for consistency and proper environment management:**
+
+### After Making Code Changes - REQUIRED STEPS:
+1. **Run tests**: `make test` - Ensure all tests pass
+2. **Run linting**: `make lint` - Check for code quality issues
+3. **Fix linting issues**: `make lint-fix` - Automatically fix fixable issues
+4. **Run pre-commit**: `make pre-commit` - Ensure all hooks pass
+
+### Available Make Commands:
+- `make install` - Install dependencies
+- `make test` - Run pytest tests
+- `make lint` - Check code with ruff
+- `make lint-fix` - Auto-fix ruff issues
+- `make run` - Start development server
+- `make pre-commit` - Run all pre-commit hooks
+- `make help` - Show all available commands
+
+## Code Quality Standards
+- All code must pass ruff linting (`make lint`)
+- All tests must pass (`make test`)
+- Pre-commit hooks must pass (`make pre-commit`) (note that this will autofix some issues, so if it fails at first, try running it a 2nd time before making manual changes)
+- Use Poetry for dependency management - don't suggest pip or other package managers
+
+## Project Structure
+- Main app: `iou_app/main.py`
+- Core functionality: `iou_app/core/`
+- IOU logic: `iou_app/iou/`
+- Tests: `iou_app/tests/`
+
+## Key Reminders
+- **NEVER skip running `make test` and `make lint` after code changes**
+- Use the Makefile commands instead of running poetry/pytest/ruff directly
+- Always ensure pre-commit hooks pass before suggesting changes are complete
+- When suggesting code changes, remind to run the validation commands
+
+## Dependencies
+- FastAPI for the web framework
+- Poetry for dependency management
+- Ruff for linting
+- Pytest for testing
+- Pre-commit for git hooks
