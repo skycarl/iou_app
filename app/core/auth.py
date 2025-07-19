@@ -3,7 +3,7 @@ import os
 from fastapi import Header
 from fastapi import HTTPException
 
-X_TOKEN = os.environ['X_TOKEN']
+X_TOKEN = os.environ.get('X_TOKEN', 'not-found')
 
 
 async def verify_token(x_token: str = Header()):
