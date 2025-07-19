@@ -121,13 +121,18 @@ docker image prune -f || echo "Image cleanup failed, continuing anyway"
 # Disable trap since we succeeded
 trap - ERR
 
-echo "Deployment completed successfully!"
-echo "App is running at: http://localhost:8000"
-echo "Health check: http://localhost:8000/healthcheck"
+log "Deployment completed successfully!"
+log "App is running at: http://localhost:8000"
+log "Health check: http://localhost:8000/healthcheck"
 
 # Final verification
-echo "Final status check:"
+log "Final status check:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Brief pause to ensure all output is flushed
+sleep 1
+
+log "Script completed successfully"
 
 # Ensure script exits cleanly
 exit 0
