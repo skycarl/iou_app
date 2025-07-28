@@ -29,4 +29,4 @@ python-telegram-bot = "^22.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest-asyncio = "^1.0.0"
-ruff = "^0.12.1"
+ruff = "^0.12.5"
