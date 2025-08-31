@@ -8,7 +8,7 @@ A simple IOU tracking system with Telegram bot integration
 
 ## Overview
 
-The IOU App is a simple debt tracking application that helps friends, roommates, and groups manage shared expenses and IOUs. It consists of a FastAPI backend with a Telegram bot interface, allowing users to send money, split bills, query balances, and settle debts through an intuitive chat experience, all without exchanging actual money.
+The IOU App is a simple debt tracking application that helps friends, roommates, and groups manage shared expenses and IOUs. It consists of a FastAPI backend with a Telegram bot interface, allowing users to send money, split bills, query balances, and settle debts through an intuitive chat experience, all without exchanging actual money and with just a few taps. 
 
 ## Key Features
 
@@ -25,7 +25,6 @@ The IOU App is a simple debt tracking application that helps friends, roommates,
 - Guided conversation flows for all operations
 - User authorization and registration system
 - Real-time notifications
-- Support for both private and group chats
 
 ### 🏗️ **Technical Features**
 - FastAPI REST API backend
@@ -34,15 +33,6 @@ The IOU App is a simple debt tracking application that helps friends, roommates,
 - Comprehensive test coverage
 - Code quality enforcement with ruff linting
 - Pre-commit hooks for development workflow
-
-## Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Telegram Bot  │───▶│   FastAPI App   │───▶│   DynamoDB      │
-│   (User Interface) │    │   (API Backend)   │    │   (Data Storage)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
 
 ## Setup Instructions
 
@@ -147,31 +137,8 @@ All commands use interactive inline keyboards for easy navigation.
 ```bash
 # Install dependencies
 make install
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Auto-fix linting issues
-make lint-fix
-
-# Run pre-commit hooks
-make pre-commit
-
-# Start development server
-make run
 ```
 
-### Development Workflow
-
-**Always follow this workflow after making code changes:**
-
-1. **Run tests**: `make test`
-2. **Run linting**: `make lint`
-3. **Fix linting issues**: `make lint-fix`
-4. **Run pre-commit hooks**: `make pre-commit`
 
 ### Available Make Commands
 
@@ -200,15 +167,9 @@ make run
 2. Bot calculates final amount and clears all transactions
 3. Fresh start for future IOUs
 
-## Data Storage
-
-- **Primary Storage**: AWS DynamoDB for implementation ease
-- **Caching**: In-memory caching with TTL for performance
-- **Data Structure**: Separate tables for transactions and users
-
 ## Deployment
 
-The application is designed for containerized deployment:
+To deploy:
 
 ```bash
 # Production deployment
@@ -220,17 +181,3 @@ docker compose logs -f app
 # View bot logs
 docker compose logs -f bot
 ```
-
-## Security
-
-- **API Authentication**: X-Token header validation
-- **User Authorization**: Telegram users must be pre-registered
-- **Environment Variables**: Sensitive configuration in `.env` files
-- **AWS IAM**: Proper IAM roles for DynamoDB access
-
-## Contributing
-
-1. Follow the development workflow outlined above
-2. Ensure all tests pass and linting is clean
-3. Pre-commit hooks must pass before committing
-4. Use Poetry for dependency management
