@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "iou-app",
-      "database_id": "TBD",
+      "database_id": "fa83c33d-f0ab-47e4-a916-82a06ef5c547",
       "migrations_dir": "migrations"
     }
   ]
