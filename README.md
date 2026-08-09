@@ -3,181 +3,140 @@
 </h1>
 
 <h2 align="center">
-A simple IOU tracking system with Telegram bot integration
+A Telegram bot for tracking IOUs between friends
 </h2>
 
 ## Overview
 
-The IOU App is a simple debt tracking application that helps friends, roommates, and groups manage shared expenses and IOUs. It consists of a FastAPI backend with a Telegram bot interface, allowing users to send money, split bills, query balances, and settle debts through an intuitive chat experience, all without exchanging actual money and with just a few taps. 
+The IOU App helps friends, roommates and groups keep track of who owes whom
+without anyone actually moving money around. Everything happens in Telegram:
+record what you owe, bill someone, split a bill among several people, check a
+balance, and settle up — each through a guided flow with tappable buttons.
 
-## Key Features
+## Bot commands
 
-### 💸 **Core Functionality**
-- **Send Money**: Record payments between users
-- **Bill Users**: Create IOUs when someone owes you money
-- **Query Status**: Check who owes what between any two users
-- **Split Bills**: Automatically divide expenses among multiple participants
-- **Settle Debts**: Clear all transactions between two users (used when actual money is exchanged to settle debts)
-- **Transaction History**: View complete payment history
+| Command | Description |
+|---------|-------------|
+| `/start` | Register with the bot |
+| `/send` | Record that you owe someone |
+| `/bill` | Record that someone owes you |
+| `/query` | Check the balance between two users |
+| `/split` | Split a bill among several people |
+| `/settle` | Clear all transactions with another user |
+| `/list` | Show your transaction history |
+| `/cancel` | Abandon the flow you are in |
+| `/help` | Show available commands |
+| `/hello` | Say hello |
+| `/version` | Show the deployed version |
 
-### 🤖 **Telegram Bot Interface**
-- Interactive inline keyboards for easy user selection
-- Guided conversation flows for all operations
-- User authorization and registration system
-- Real-time notifications
+Membership is a manually maintained allowlist — there is no self-signup. See
+[Adding a user](#adding-a-user).
 
-### 🏗️ **Technical Features**
-- FastAPI REST API backend
-- AWS DynamoDB for data persistence with caching
-- Docker containerization for easy deployment
-- Comprehensive test coverage
-- Code quality enforcement with ruff linting
-- Pre-commit hooks for development workflow
+## Architecture
 
-## Setup Instructions
+A single Cloudflare Worker, written in TypeScript:
 
-### Prerequisites
-- Docker and Docker Compose
-- AWS account with DynamoDB access
-- Telegram Bot Token (from [@BotFather](https://t.me/botfather))
+- **[grammY](https://grammy.dev)** handles the Telegram Bot API, with
+  `@grammyjs/conversations` driving the multi-step flows.
+- **D1** (Cloudflare's SQLite) stores users, entries and conversation state.
+  Schema lives in `migrations/`.
+- The bot runs on **webhooks**, not polling, so the Worker only executes when
+  an update arrives.
 
-### 1. Environment Configuration
-
-Create a `.env` file in the root directory with the following variables:
-
-```bash
-# Telegram Configuration
-TELEGRAM_BOT_TOKEN=your-bot-token-here
-X_TOKEN=your-api-security-token
-
-# API Configuration
-APP_URL=http://app:8000/api
-
-# AWS Configuration
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_DEFAULT_REGION=us-west-2
-
-# DynamoDB Tables
-DDB_DATA_TABLE_NAME=iou_app_dev
-DDB_USERS_TABLE_NAME=iou_users_dev
-
-# Docker Configuration
-HOST_PATH=/path/to/your/project
+```
+worker/
+  index.ts       fetch handler: /healthcheck and the webhook route
+  bot/           bot wiring, authorization, shared helpers, user-facing strings
+  flows/         the five guided conversations
+  domain/        amounts, balances, splits, formatting — no I/O
+  db/            D1 queries and the conversation session store
 ```
 
-### 2. Launch Application
+Amounts are stored as `REAL` and rounded only for display. Settling
+soft-deletes entries (`deleted = 1`) rather than removing them.
+
+## Security model
+
+The Worker exposes exactly two routes. `/healthcheck` returns a status and
+version and touches no data. Everything else is the webhook, at
+`/telegram/<random-segment>` — the segment is in `worker/webhookPath.ts`.
+
+Knowing that URL is not sufficient. Telegram echoes back a shared secret in the
+`X-Telegram-Bot-Api-Secret-Token` header, which the Worker compares against
+`TELEGRAM_WEBHOOK_SECRET` in constant time; anything else gets a 401. Beyond
+that, every update's sender must resolve to a row in `users`, matched on their
+numeric Telegram id where one is recorded, so a username change neither locks
+someone out nor lets anyone rename their way in. Authorization fails closed if
+the database is unreachable.
+
+## Local development
 
 ```bash
-# Start all services with Docker Compose
-docker compose up -d
+npm install
+npx wrangler d1 migrations apply iou-app --local
+npx wrangler dev
 ```
 
-This will start:
-- **FastAPI app** on `http://localhost:8000`
-- **Telegram bot** connected to your configured bot token
+Put local secrets in `.dev.vars` (gitignored):
 
-### 3. Verify Setup
-
-Check that services are running:
-```bash
-# Check API health
-curl http://localhost:8000/healthcheck
-
-# View logs
-docker compose logs -f
+```
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_WEBHOOK_SECRET=...
 ```
 
-## API Endpoints
+`wrangler dev` uses a local D1 by default, so nothing you do touches production
+data. Seed the local database with `npx wrangler d1 execute iou-app --local
+--command "..."`.
 
-The FastAPI backend provides the following REST endpoints:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/healthcheck` | Service health status |
-| `GET` | `/version` | Application version |
-| `GET` | `/api/entries` | List transactions (with optional user filters) |
-| `POST` | `/api/entries` | Create new transaction |
-| `GET` | `/api/entries/{id}` | Get specific transaction |
-| `DELETE` | `/api/entries/{id}` | Soft delete transaction |
-| `GET` | `/api/iou_status/` | Get IOU status between two users |
-| `POST` | `/api/split` | Split bill among participants |
-| `POST` | `/api/settle` | Settle all debts between two users |
-| `GET` | `/api/users/` | List all users |
-| `POST` | `/api/users` | Create new user |
-| `GET` | `/api/users/{username}` | Get user details |
-| `PUT` | `/api/users/{username}` | Update user information |
-
-All API endpoints require the `X-Token` header for authentication.
-
-## Telegram Bot Commands
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/start` | Register with the bot | `/start` |
-| `/send` | Send money to another user | Guided flow |
-| `/bill` | Bill someone for money they owe | Guided flow |
-| `/query` | Check IOU status between users | Guided flow |
-| `/split` | Split a bill among multiple people | Guided flow |
-| `/settle` | Settle all debts with another user | Guided flow |
-| `/list` | View your transaction history | `/list` |
-| `/help` | Show available commands | `/help` |
-| `/version` | Show app version | `/version` |
-
-All commands use interactive inline keyboards for easy navigation.
-
-## Development
-
-### Prerequisites
-- Python 3.13+
-- Poetry for dependency management
-
-### Setup Development Environment
+## Testing
 
 ```bash
-# Install dependencies
-make install
+npm test          # vitest, against a real local D1
+npx tsc --noEmit  # typecheck
 ```
 
-
-### Available Make Commands
-
-- `make install` - Install dependencies with Poetry
-- `make test` - Run pytest test suite
-- `make lint` - Check code quality with ruff
-- `make lint-fix` - Auto-fix ruff issues
-- `make run` - Start FastAPI development server
-- `make pre-commit` - Run all pre-commit hooks
-- `make help` - Show available commands
-
-## Example Use Cases
-
-### Scenario 1: Dinner Split
-1. Alex pays $60 for dinner for 3 people
-2. Use `/split` command to divide among Alex, Sam, and Jordan
-3. Bot creates IOUs: Sam owes Alex $20, Jordan owes Alex $20
-
-### Scenario 2: Ongoing Expenses
-1. Sam uses `/bill` to bill Jordan $25 for groceries
-2. Later, Jordan uses `/send` to pay Sam $15 for gas
-3. Use `/query` to check: Jordan owes Sam $10 total
-
-### Scenario 3: Settlement
-1. After many transactions, use `/settle` between Sam and Jordan
-2. Bot calculates final amount and clears all transactions
-3. Fresh start for future IOUs
+Tests cover the amount parser, balance and split maths, D1 queries and
+settlement, webhook authentication, allowlist gating, and all five guided flows
+driven end to end through real Telegram updates.
 
 ## Deployment
 
-To deploy:
+Push to `main`. The `Deploy Worker` GitHub Actions workflow typechecks, runs the
+tests, applies any pending D1 migrations, and then deploys. It needs two repo
+secrets: `CLOUDFLARE_API_TOKEN` (with Workers and D1 edit permission) and
+`CLOUDFLARE_ACCOUNT_ID`.
+
+The Worker itself needs two secrets, set once with `npx wrangler secret put`:
+
+| Secret | Purpose |
+|--------|---------|
+| `TELEGRAM_BOT_TOKEN` | Bot token from [@BotFather](https://t.me/botfather) |
+| `TELEGRAM_WEBHOOK_SECRET` | Shared secret registered with `setWebhook` and verified on every update |
+
+If you change either the webhook path or the secret, re-register the webhook
+with Telegram's `setWebhook`, passing the full URL and a matching
+`secret_token`. If the two disagree, every update is rejected with a 401.
+
+## Adding a user
+
+New users are added by hand — the bot has no signup flow:
 
 ```bash
-# Production deployment
-docker compose -f docker-compose.yml up -d
-
-# View application logs
-docker compose logs -f app
-
-# View bot logs
-docker compose logs -f bot
+npx wrangler d1 execute iou-app --remote \
+  --command "INSERT INTO users (username, conversation_id, telegram_user_id) VALUES ('their_telegram_username', NULL, NULL)"
 ```
+
+They then send `/start` to the bot, which records the chat to message them in
+and binds their numeric Telegram id. Until they do, other people's flows will
+report them as not registered.
+
+## Examples
+
+**Dinner split.** Alex pays $60 for three. `/split` divides it and creates two
+IOUs: Sam owes Alex $20, Jordan owes Alex $20.
+
+**Ongoing expenses.** Sam bills Jordan $25 for groceries; later Jordan sends Sam
+$15 for gas. `/query` reports that Jordan owes Sam $10.
+
+**Settlement.** Once real money changes hands, `/settle` clears everything
+between the two of them and starts them over at zero.
