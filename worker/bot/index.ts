@@ -135,9 +135,8 @@ export async function createBot(
     await ctx.reply(`App version: ${VERSION}`);
   });
 
-  bot.catch((error) => {
-    console.error({ message: 'unhandled bot error', error: String(error.error) });
-  });
-
+  // No `bot.catch` here: grammY only consults that handler from the polling
+  // loop, so under `webhookCallback` it would be dead code. Middleware errors
+  // are handled where they actually surface, in worker/index.ts.
   return bot;
 }

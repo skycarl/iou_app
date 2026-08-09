@@ -2,3 +2,4 @@
 // file. The bundle is gitignored; this declaration keeps `tsc --noEmit` working
 // whether or not it has been built yet.
 export { createBot } from '../../worker/bot/index.js';
+export { default as worker } from '../../worker/index.js';
