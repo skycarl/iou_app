@@ -1,4 +1,7 @@
-/** User-facing text, kept close to the legacy bot's phrasing (bot/main.py). */
+/**
+ * User-facing text. The phrasing is inherited from the Python bot this
+ * replaced, so the bot still reads the same to the people already using it.
+ */
 
 export const UNAUTHORIZED = 'Sorry, you are not authorized to use this bot.';
 export const UNAUTHORIZED_CALLBACK = 'Unauthorized access!';

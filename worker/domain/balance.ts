@@ -14,11 +14,10 @@ export interface IouStatus {
 }
 
 /**
- * Port of the inline algorithm in `read_iou_status` (app/iou/views.py:129-160).
+ * Nets out what two users owe each other. A sender owes their recipient.
  *
- * `entries` must already exclude soft-deleted rows. Rows not between the two
- * users are ignored, mirroring the filtering that `get_entries` applied first.
- * A sender owes their recipient.
+ * `entries` must already exclude soft-deleted rows. Entries not between these
+ * two users are ignored, so a caller may pass a wider set.
  */
 export function computeIouStatus(
   entries: readonly BalanceEntry[],
