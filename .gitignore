@@ -134,7 +134,6 @@ dmypy.json
 .DS_Store
 
 db_data/
-*.json
 .ruff_cache/
 .op/
 
@@ -143,7 +142,6 @@ node_modules/
 .wrangler/
 worker-configuration.d.ts
 test/generated/*.mjs
-# The blanket *.json rule above predates the Worker; these are source.
-!package.json
-!package-lock.json
-!tsconfig.json
+
+# Wrangler local secrets
+.dev.vars

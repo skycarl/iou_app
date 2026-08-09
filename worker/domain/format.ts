@@ -34,7 +34,7 @@ function formattedDate(createdAt: string): string {
   return createdAt.slice(0, 10);
 }
 
-/** Port of `format_transactions` in bot/main.py. */
+/** Renders a user's transaction history for /list. */
 export function formatTransactions(
   entries: readonly TransactionEntry[],
   currentUser: string,

@@ -20,7 +20,7 @@ export interface SplitResult {
 }
 
 /**
- * Port of the `/split` endpoint (app/iou/views.py:162-204).
+ * Divides an amount evenly among the participants.
  *
  * The payer counts towards the divisor whenever they appear in `participants`
  * (the bot always adds them), and only the other participants get an entry —
